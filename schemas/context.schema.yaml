@@ -1,0 +1,129 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: context.schema.yaml
+title: Learning context and initial diagnostic
+type: object
+additionalProperties: false
+required:
+  - format_version
+  - goal
+  - experience
+  - depth
+  - constraints
+  - preferences
+  - diagnostic
+properties:
+  format_version:
+    const: 1
+  goal:
+    type: object
+    additionalProperties: false
+    required:
+      - why
+      - outcome
+    properties:
+      why:
+        type: string
+        minLength: 1
+      outcome:
+        type: string
+        minLength: 1
+  experience:
+    type: object
+    additionalProperties: false
+    required:
+      - level
+    properties:
+      level:
+        enum:
+          - newcomer
+          - beginner
+          - intermediate
+          - advanced
+      notes:
+        type: string
+  depth:
+    enum:
+      - overview
+      - working
+      - deep
+  constraints:
+    type: object
+    additionalProperties: false
+    required:
+      - default_session_minutes
+    properties:
+      default_session_minutes:
+        type: integer
+        minimum: 5
+      sessions_per_week:
+        type: integer
+        minimum: 1
+  preferences:
+    type: object
+    additionalProperties: false
+    required:
+      - languages
+      - resources
+    properties:
+      languages:
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items:
+          type: string
+          minLength: 2
+      resources:
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items:
+          type: string
+          minLength: 1
+  diagnostic:
+    type: object
+    additionalProperties: false
+    required:
+      - status
+    properties:
+      status:
+        enum:
+          - pending
+          - completed
+          - skipped
+      completed_at:
+        type: string
+        format: date
+      summary:
+        type: string
+      areas:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          additionalProperties: false
+          required:
+            - area
+            - level
+          properties:
+            area:
+              type: string
+              minLength: 1
+            level:
+              enum:
+                - strong
+                - weak
+                - unknown
+            notes:
+              type: string
+    allOf:
+      - if:
+          properties:
+            status:
+              const: completed
+          required:
+            - status
+        then:
+          required:
+            - completed_at
+            - areas
+

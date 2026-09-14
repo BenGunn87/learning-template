@@ -1,0 +1,73 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: frontier.schema.yaml
+title: Initial learning frontier
+type: object
+additionalProperties: false
+required:
+  - format_version
+  - focus
+  - units
+properties:
+  format_version:
+    const: 1
+  focus:
+    type: object
+    additionalProperties: false
+    required:
+      - primary
+      - secondary
+    properties:
+      primary:
+        type: string
+        pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+      secondary:
+        type: array
+        uniqueItems: true
+        items:
+          type: string
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  units:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - nodes
+        - goal
+        - estimated_minutes
+        - priority
+      properties:
+        id:
+          type: string
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+        title:
+          type: string
+          minLength: 1
+        nodes:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+        goal:
+          type: string
+          minLength: 1
+        estimated_minutes:
+          type: integer
+          minimum: 5
+        priority:
+          enum:
+            - high
+            - medium
+            - low
+        blocked_by:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$

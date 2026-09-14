@@ -1,0 +1,11 @@
+session:
+  default_minutes: 25
+
+frontier:
+  target_units: 7
+  min_units: 5
+  max_units: 10
+
+diagnostic:
+  enabled: true
+
