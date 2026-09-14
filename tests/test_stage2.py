@@ -287,6 +287,14 @@ class Stage2Test(unittest.TestCase):
         session = yaml.safe_load((self.root / "sessions/2026-09-14-001.yaml").read_text(encoding="utf-8"))
         self.assertEqual("completed", session["status"])
 
+    def test_failed_recall_takes_priority_over_application_hard(self) -> None:
+        result = {
+            "recall": "failed",
+            "understanding": "good",
+            "application": "hard",
+        }
+
+        self.assertEqual("learning", self.repository._progress_status(result))
 
 if __name__ == "__main__":
     unittest.main()

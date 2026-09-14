@@ -408,10 +408,12 @@ class Stage2RepositoryMixin:
 
     @staticmethod
     def _progress_status(result: dict[str, str]) -> str:
-        if result["application"] in {"failed", "hard"}:
-            return "practice"
         if result["recall"] == "failed" or result["understanding"] == "failed":
             return "learning"
+
+        if result["application"] in {"failed", "hard"}:
+            return "practice"
+
         return "verified"
 
     def rebuild_progress(self) -> dict[str, Any]:
