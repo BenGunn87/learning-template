@@ -1,0 +1,12 @@
+format_version: 1
+id: 2026-09-14-001
+started_at: '2026-09-14T14:15:15+05:00'
+time_budget_minutes: 25
+status: completed
+plan:
+  unit: frame-a-system-design-problem
+actual:
+  unit: frame-a-system-design-problem
+evidence:
+- 2026-09-14-001-initial
+completed_at: '2026-09-14T15:12:01+05:00'
