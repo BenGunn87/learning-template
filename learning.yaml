@@ -1,10 +1,7 @@
 format_version: 1
 
-topic:
-  id: system-design
-  title: System Design
+topic: null
 
 learning_core:
   version: 0.3.0
 
-created_at: 2026-09-14
