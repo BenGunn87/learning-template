@@ -1,2 +1,420 @@
-null
+format_version: 1
 
+nodes:
+  - id: design-process
+    title: System design process
+    type: area
+    summary: Постановка задачи, оценки масштаба, декомпозиция и проверка компромиссов.
+    importance: core
+    tags: [foundations]
+  - id: communication
+    title: Communication and APIs
+    type: area
+    summary: Сетевое взаимодействие и контракты между клиентами и сервисами.
+    importance: core
+    tags: [networking, api]
+  - id: compute-and-services
+    title: Compute and services
+    type: area
+    summary: Организация вычислений, сервисов и фоновой обработки.
+    importance: core
+    tags: [services]
+  - id: data-systems
+    title: Data systems
+    type: area
+    summary: Моделирование, хранение, индексирование и распределение данных.
+    importance: core
+    tags: [data]
+  - id: distributed-systems
+    title: Distributed systems
+    type: area
+    summary: Согласованность, репликация и координация независимых узлов.
+    importance: core
+    tags: [distributed]
+  - id: scalability-and-performance
+    title: Scalability and performance
+    type: area
+    summary: Рост нагрузки, управление ресурсами и защита критических компонентов.
+    importance: core
+    tags: [scalability, performance]
+  - id: reliability-and-operations
+    title: Reliability and operations
+    type: area
+    summary: Устойчивость к отказам, наблюдаемость и эксплуатационные цели.
+    importance: core
+    tags: [reliability, operations]
+  - id: security
+    title: Security
+    type: area
+    summary: Защита границ системы, данных и действий пользователей.
+    importance: core
+    tags: [security]
+
+  - id: requirements-analysis
+    title: Requirements analysis
+    type: topic
+    summary: Выделение сценариев, ограничений и качественных атрибутов системы.
+    importance: core
+    tags: [foundations]
+  - id: functional-nonfunctional-requirements
+    title: Functional and non-functional requirements
+    type: concept
+    summary: Разделение поведения системы и требований к качеству её работы.
+    importance: core
+    tags: [foundations]
+  - id: capacity-estimation
+    title: Capacity estimation
+    type: topic
+    summary: Приближённые расчёты трафика, хранения, пропускной способности и пиков.
+    importance: core
+    tags: [estimation]
+  - id: architecture-decomposition
+    title: Architecture decomposition
+    type: topic
+    summary: Выделение компонентов, потоков данных и границ ответственности.
+    importance: core
+    tags: [architecture]
+  - id: tradeoff-analysis
+    title: Trade-off analysis
+    type: concept
+    summary: Выбор решения через требования, альтернативы, стоимость и риски.
+    importance: core
+    tags: [decision-making]
+
+  - id: networking-basics
+    title: Networking basics
+    type: topic
+    summary: DNS, TCP, TLS, HTTP и путь запроса между клиентом и сервисом.
+    importance: core
+    tags: [networking]
+  - id: api-design
+    title: API design
+    type: topic
+    summary: Контракты, версионирование, пагинация и обработка ошибок.
+    importance: core
+    tags: [api]
+  - id: communication-patterns
+    title: Synchronous and asynchronous communication
+    type: topic
+    summary: Выбор между непосредственным запросом и обменом сообщениями.
+    importance: core
+    tags: [messaging]
+  - id: idempotency
+    title: Idempotency
+    type: concept
+    summary: Безопасное повторение операций при сбоях и повторной доставке.
+    importance: core
+    tags: [api, reliability]
+
+  - id: service-architecture
+    title: Service architecture
+    type: topic
+    summary: Границы сервисов, связанность и варианты развёртывания.
+    importance: core
+    tags: [services]
+  - id: stateless-services
+    title: Stateless services
+    type: concept
+    summary: Отделение состояния для простого горизонтального масштабирования.
+    importance: core
+    tags: [services, scalability]
+  - id: load-balancing
+    title: Load balancing
+    type: topic
+    summary: Распределение запросов, health checks и стратегии балансировки.
+    importance: core
+    tags: [scalability]
+  - id: asynchronous-processing
+    title: Asynchronous processing
+    type: topic
+    summary: Вынос долгих и непредсказуемых операций из синхронного пути запроса.
+    importance: core
+    tags: [messaging]
+  - id: message-queues
+    title: Message queues
+    type: concept
+    summary: Буферизация нагрузки, доставка сообщений и модели потребления.
+    importance: core
+    tags: [messaging]
+
+  - id: data-modeling
+    title: Data modeling
+    type: topic
+    summary: Представление сущностей и запросов с учётом паттернов доступа.
+    importance: core
+    tags: [data]
+  - id: storage-selection
+    title: Storage selection
+    type: topic
+    summary: Выбор хранилища по модели данных, запросам и гарантиям.
+    importance: core
+    tags: [data]
+  - id: sql-and-nosql
+    title: SQL and NoSQL trade-offs
+    type: concept
+    summary: Сравнение моделей и эксплуатационных свойств классов хранилищ.
+    importance: core
+    tags: [data]
+  - id: transactions
+    title: Transactions
+    type: topic
+    summary: Атомарность, изоляция и границы согласованного изменения данных.
+    importance: core
+    tags: [data, consistency]
+  - id: indexing
+    title: Indexing
+    type: topic
+    summary: Ускорение чтения ценой памяти и стоимости записи.
+    importance: core
+    tags: [data, performance]
+  - id: data-partitioning
+    title: Data partitioning
+    type: topic
+    summary: Распределение данных по узлам и выбор ключа разбиения.
+    importance: core
+    tags: [data, scalability]
+  - id: hot-partitions
+    title: Hot partitions
+    type: concept
+    summary: Неравномерная нагрузка из-за неудачного распределения ключей.
+    importance: supporting
+    tags: [data, scalability]
+
+  - id: replication
+    title: Replication
+    type: topic
+    summary: Копирование данных для доступности, чтения и восстановления.
+    importance: core
+    tags: [distributed, data]
+  - id: leader-follower-replication
+    title: Leader-follower replication
+    type: concept
+    summary: Репликация через узел записи и последствия синхронного или асинхронного режима.
+    importance: core
+    tags: [distributed, data]
+  - id: consistency-models
+    title: Consistency models
+    type: topic
+    summary: Гарантии того, какие версии данных могут наблюдать клиенты.
+    importance: core
+    tags: [distributed, consistency]
+  - id: eventual-consistency
+    title: Eventual consistency
+    type: concept
+    summary: Сходимость реплик без гарантии немедленно одинакового состояния.
+    importance: core
+    tags: [distributed, consistency]
+  - id: availability-consistency-tradeoff
+    title: Availability and consistency trade-off
+    type: concept
+    summary: Поведение распределённой системы при задержках и сетевых разделениях.
+    importance: core
+    tags: [distributed, consistency]
+  - id: quorum
+    title: Read and write quorums
+    type: concept
+    summary: Настройка числа реплик для чтения и записи и её компромиссы.
+    importance: supporting
+    tags: [distributed, consistency]
+  - id: distributed-coordination
+    title: Distributed coordination
+    type: topic
+    summary: Выбор лидера, порядок событий и согласование решений между узлами.
+    importance: supporting
+    tags: [distributed]
+
+  - id: latency-throughput
+    title: Latency and throughput
+    type: concept
+    summary: Две разные характеристики производительности и их распределения.
+    importance: core
+    tags: [performance]
+  - id: bottleneck-analysis
+    title: Bottleneck analysis
+    type: topic
+    summary: Поиск ограничивающего ресурса по измерениям и профилю нагрузки.
+    importance: core
+    tags: [performance]
+  - id: horizontal-scaling
+    title: Horizontal scaling
+    type: topic
+    summary: Увеличение ёмкости добавлением экземпляров и распределением нагрузки.
+    importance: core
+    tags: [scalability]
+  - id: caching
+    title: Caching
+    type: topic
+    summary: Снижение задержки и нагрузки с помощью временных копий данных.
+    importance: core
+    tags: [performance, data]
+  - id: cache-strategies
+    title: Cache strategies
+    type: concept
+    summary: Cache-aside, read-through, write-through и выбор TTL.
+    importance: core
+    tags: [performance, data]
+  - id: cache-invalidation
+    title: Cache invalidation
+    type: concept
+    summary: Согласование изменений источника данных и закэшированных значений.
+    importance: core
+    tags: [performance, consistency]
+  - id: cache-stampede
+    title: Cache stampede
+    type: concept
+    summary: Всплеск обращений к источнику после одновременного промаха или истечения ключа.
+    importance: supporting
+    tags: [performance, reliability]
+  - id: rate-limiting
+    title: Rate limiting
+    type: topic
+    summary: Контроль входящей нагрузки и справедливое распределение квот.
+    importance: core
+    tags: [scalability, reliability]
+
+  - id: failure-models
+    title: Failure models
+    type: topic
+    summary: Типы частичных отказов, задержек и недоступности зависимостей.
+    importance: core
+    tags: [reliability]
+  - id: redundancy
+    title: Redundancy and failover
+    type: topic
+    summary: Устранение единичных точек отказа и переключение на резерв.
+    importance: core
+    tags: [reliability]
+  - id: timeout-retry-circuit-breaker
+    title: Timeouts, retries, and circuit breakers
+    type: topic
+    summary: Ограничение каскадных отказов при нестабильных зависимостях.
+    importance: core
+    tags: [reliability]
+  - id: backpressure
+    title: Backpressure
+    type: concept
+    summary: Ограничение производителей, когда потребители не успевают обрабатывать нагрузку.
+    importance: core
+    tags: [reliability, messaging]
+  - id: observability
+    title: Observability
+    type: topic
+    summary: Метрики, логи и трассировки для понимания состояния системы.
+    importance: core
+    tags: [operations]
+  - id: sli-slo
+    title: SLI, SLO, and error budgets
+    type: concept
+    summary: Измеримые цели надёжности и допустимый бюджет ошибок.
+    importance: core
+    tags: [operations, reliability]
+  - id: disaster-recovery
+    title: Backup and disaster recovery
+    type: topic
+    summary: Восстановление данных и сервиса с целями RPO и RTO.
+    importance: core
+    tags: [operations, reliability]
+
+  - id: authentication-authorization
+    title: Authentication and authorization
+    type: topic
+    summary: Проверка личности и контроль разрешённых действий.
+    importance: core
+    tags: [security]
+  - id: threat-modeling
+    title: Threat modeling
+    type: topic
+    summary: Поиск активов, границ доверия, угроз и защитных мер.
+    importance: supporting
+    tags: [security]
+  - id: data-protection
+    title: Data protection
+    type: topic
+    summary: Шифрование, управление секретами и минимизация чувствительных данных.
+    importance: core
+    tags: [security, data]
+
+edges:
+  - {from: requirements-analysis, to: design-process, type: part-of}
+  - {from: functional-nonfunctional-requirements, to: requirements-analysis, type: part-of}
+  - {from: capacity-estimation, to: design-process, type: part-of}
+  - {from: architecture-decomposition, to: design-process, type: part-of}
+  - {from: tradeoff-analysis, to: design-process, type: part-of}
+  - {from: requirements-analysis, to: capacity-estimation, type: prerequisite}
+  - {from: requirements-analysis, to: architecture-decomposition, type: prerequisite}
+  - {from: capacity-estimation, to: architecture-decomposition, type: prerequisite}
+
+  - {from: networking-basics, to: communication, type: part-of}
+  - {from: api-design, to: communication, type: part-of}
+  - {from: communication-patterns, to: communication, type: part-of}
+  - {from: idempotency, to: api-design, type: part-of}
+  - {from: networking-basics, to: api-design, type: prerequisite}
+
+  - {from: service-architecture, to: compute-and-services, type: part-of}
+  - {from: stateless-services, to: service-architecture, type: part-of}
+  - {from: load-balancing, to: compute-and-services, type: part-of}
+  - {from: asynchronous-processing, to: compute-and-services, type: part-of}
+  - {from: message-queues, to: asynchronous-processing, type: part-of}
+  - {from: stateless-services, to: load-balancing, type: prerequisite}
+  - {from: communication-patterns, to: asynchronous-processing, type: prerequisite}
+
+  - {from: data-modeling, to: data-systems, type: part-of}
+  - {from: storage-selection, to: data-systems, type: part-of}
+  - {from: sql-and-nosql, to: storage-selection, type: part-of}
+  - {from: transactions, to: data-systems, type: part-of}
+  - {from: indexing, to: data-systems, type: part-of}
+  - {from: data-partitioning, to: data-systems, type: part-of}
+  - {from: hot-partitions, to: data-partitioning, type: part-of}
+  - {from: data-modeling, to: storage-selection, type: prerequisite}
+  - {from: data-modeling, to: indexing, type: prerequisite}
+  - {from: storage-selection, to: data-partitioning, type: prerequisite}
+
+  - {from: replication, to: distributed-systems, type: part-of}
+  - {from: leader-follower-replication, to: replication, type: part-of}
+  - {from: consistency-models, to: distributed-systems, type: part-of}
+  - {from: eventual-consistency, to: consistency-models, type: part-of}
+  - {from: availability-consistency-tradeoff, to: consistency-models, type: part-of}
+  - {from: quorum, to: consistency-models, type: part-of}
+  - {from: distributed-coordination, to: distributed-systems, type: part-of}
+  - {from: replication, to: consistency-models, type: prerequisite}
+  - {from: consistency-models, to: distributed-coordination, type: prerequisite}
+  - {from: networking-basics, to: failure-models, type: prerequisite}
+
+  - {from: latency-throughput, to: scalability-and-performance, type: part-of}
+  - {from: bottleneck-analysis, to: scalability-and-performance, type: part-of}
+  - {from: horizontal-scaling, to: scalability-and-performance, type: part-of}
+  - {from: caching, to: scalability-and-performance, type: part-of}
+  - {from: cache-strategies, to: caching, type: part-of}
+  - {from: cache-invalidation, to: caching, type: part-of}
+  - {from: cache-stampede, to: caching, type: part-of}
+  - {from: rate-limiting, to: scalability-and-performance, type: part-of}
+  - {from: latency-throughput, to: bottleneck-analysis, type: prerequisite}
+  - {from: bottleneck-analysis, to: horizontal-scaling, type: prerequisite}
+  - {from: cache-strategies, to: cache-invalidation, type: prerequisite}
+  - {from: cache-invalidation, to: cache-stampede, type: prerequisite}
+
+  - {from: failure-models, to: reliability-and-operations, type: part-of}
+  - {from: redundancy, to: reliability-and-operations, type: part-of}
+  - {from: timeout-retry-circuit-breaker, to: reliability-and-operations, type: part-of}
+  - {from: backpressure, to: reliability-and-operations, type: part-of}
+  - {from: observability, to: reliability-and-operations, type: part-of}
+  - {from: sli-slo, to: reliability-and-operations, type: part-of}
+  - {from: disaster-recovery, to: reliability-and-operations, type: part-of}
+  - {from: failure-models, to: redundancy, type: prerequisite}
+  - {from: failure-models, to: timeout-retry-circuit-breaker, type: prerequisite}
+  - {from: observability, to: sli-slo, type: prerequisite}
+  - {from: replication, to: disaster-recovery, type: related}
+  - {from: message-queues, to: backpressure, type: related}
+  - {from: idempotency, to: timeout-retry-circuit-breaker, type: related}
+
+  - {from: authentication-authorization, to: security, type: part-of}
+  - {from: threat-modeling, to: security, type: part-of}
+  - {from: data-protection, to: security, type: part-of}
+  - {from: api-design, to: authentication-authorization, type: related}
+  - {from: data-systems, to: data-protection, type: related}
+  - {from: requirements-analysis, to: threat-modeling, type: prerequisite}
+
+  - {from: capacity-estimation, to: latency-throughput, type: related}
+  - {from: architecture-decomposition, to: service-architecture, type: related}
+  - {from: tradeoff-analysis, to: storage-selection, type: related}
+  - {from: tradeoff-analysis, to: consistency-models, type: related}
