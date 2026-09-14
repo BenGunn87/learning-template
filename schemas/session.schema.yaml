@@ -1,0 +1,93 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: session.schema.yaml
+title: Learning session
+type: object
+additionalProperties: false
+required:
+  - format_version
+  - id
+  - started_at
+  - time_budget_minutes
+  - status
+  - plan
+  - actual
+  - evidence
+  - completed_at
+properties:
+  format_version:
+    const: 1
+  id:
+    type: string
+    pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{3}$
+  started_at:
+    type: string
+    format: date-time
+  time_budget_minutes:
+    type: integer
+    minimum: 1
+  status:
+    enum:
+      - active
+      - completed
+  plan:
+    type: object
+    additionalProperties: false
+    required:
+      - unit
+    properties:
+      unit:
+        type: string
+        pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  actual:
+    type: object
+    additionalProperties: false
+    required:
+      - unit
+    properties:
+      unit:
+        oneOf:
+          - type: 'null'
+          - type: string
+            pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  evidence:
+    type: array
+    maxItems: 1
+    uniqueItems: true
+    items:
+      type: string
+      pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  completed_at:
+    oneOf:
+      - type: 'null'
+      - type: string
+        format: date-time
+allOf:
+  - if:
+      properties:
+        status:
+          const: active
+    then:
+      properties:
+        actual:
+          properties:
+            unit:
+              type: 'null'
+        evidence:
+          maxItems: 0
+        completed_at:
+          type: 'null'
+  - if:
+      properties:
+        status:
+          const: completed
+    then:
+      properties:
+        actual:
+          properties:
+            unit:
+              type: string
+        evidence:
+          minItems: 1
+        completed_at:
+          type: string
+          format: date-time

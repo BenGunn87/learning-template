@@ -1,8 +1,7 @@
-"""Repository state detection and deterministic Stage 1 operations."""
+"""Repository state detection and shared deterministic operations."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -10,21 +9,12 @@ from jsonschema import FormatChecker
 from jsonschema.exceptions import SchemaError
 from jsonschema.validators import validator_for
 
+from .issues import Issue
+from .stage2 import Stage2RepositoryMixin
 from .yaml_io import YamlFileError, dump_yaml, load_yaml
 
 
-@dataclass(frozen=True)
-class Issue:
-    file: str
-    message: str
-    path: str = ""
-
-    def render(self) -> str:
-        location = f" at {self.path}" if self.path else ""
-        return f"{self.file}{location}: {self.message}"
-
-
-class Repository:
+class Repository(Stage2RepositoryMixin):
     DOCUMENTS = {
         "learning": Path("learning.yaml"),
         "context": Path("config/context.yaml"),
@@ -32,7 +22,8 @@ class Repository:
         "frontier": Path("map/frontier.yaml"),
     }
     SCHEMAS = {
-        name: Path("schemas") / f"{name}.schema.yaml" for name in DOCUMENTS
+        name: Path("schemas") / f"{name}.schema.yaml"
+        for name in (*DOCUMENTS, "unit", "session", "evidence", "assessment", "progress")
     }
     REQUIRED_DIRECTORIES = (
         "config",
@@ -115,6 +106,9 @@ class Repository:
             except YamlFileError as exc:
                 return [Issue(relative, str(exc))]
 
+        return self.validate_schema(name, data, relative)
+
+    def validate_schema(self, name: str, data: Any, relative: str) -> list[Issue]:
         schema, issues = self._schema(name)
         if issues:
             return issues
@@ -284,6 +278,8 @@ class Repository:
             if isinstance(frontier, dict):
                 issues.extend(self.validate_frontier(frontier, graph))
 
+        issues.extend(self.validate_stage2_repository())
+
         unique: dict[tuple[str, str, str], Issue] = {}
         for issue in issues:
             unique[(issue.file, issue.path, issue.message)] = issue
@@ -339,22 +335,74 @@ class Repository:
         graph = self.read("graph")
         frontier = self.read("frontier")
         node_titles = {node["id"]: node["title"] for node in graph["nodes"]}
-        lines = [learning["topic"]["title"], "", "Goal:", context["goal"]["outcome"].strip(), "", "Diagnostic:"]
-        diagnostic = context["diagnostic"]
-        if diagnostic["status"] == "completed":
-            for level in ("strong", "weak", "unknown"):
-                areas = [area["area"] for area in diagnostic.get("areas", []) if area["level"] == level]
-                lines.append(f"{level.capitalize()}:")
-                lines.extend(f"- {area}" for area in areas)
-                if not areas:
-                    lines.append("- none")
-        else:
-            lines.append(diagnostic["status"])
+        frontier_titles = {unit["id"]: unit["title"] for unit in frontier["units"]}
+        unit_documents, _ = self._read_files("units")
+        unit_titles = {
+            data["id"]: data["title"]
+            for _, data in unit_documents
+            if isinstance(data, dict) and isinstance(data.get("id"), str) and isinstance(data.get("title"), str)
+        }
+        titles = {**frontier_titles, **unit_titles}
+        progress = self.read_progress()
+        lines = [learning["topic"]["title"], "", "Goal:", context["goal"]["outcome"].strip()]
 
-        lines.extend(["", "Primary focus:", node_titles.get(frontier["focus"]["primary"], frontier["focus"]["primary"]), "", "Frontier:"])
-        for index, unit in enumerate(frontier["units"], start=1):
-            blocked = " [blocked]" if unit.get("blocked_by") else ""
-            lines.append(f"{index}. {unit['title']} — {unit['estimated_minutes']} min{blocked}")
+        if progress:
+            lines.extend(["", f"Completed attempts: {sum(item['attempts'] for item in progress.values())}"])
+            verified = [unit_id for unit_id, item in progress.items() if item["status"] == "verified"]
+            lines.extend(["", "Verified:"])
+            lines.extend(f"- {titles.get(unit_id, unit_id)}" for unit_id in verified)
+            if not verified:
+                lines.append("- none")
+
+            practice = [unit_id for unit_id, item in progress.items() if item["status"] == "practice"]
+            lines.extend(["", "Needs practice:"])
+            if practice:
+                for unit_id in practice:
+                    lines.append(f"- {titles.get(unit_id, unit_id)}")
+                    assessment_id = progress[unit_id]["latest_assessment"]
+                    matches = self._find_by_id("assessments", assessment_id)
+                    if matches and isinstance(matches[0][1], dict):
+                        lines.extend(f"  - {gap}" for gap in matches[0][1].get("gaps", []))
+            else:
+                lines.append("- none")
+
+            learning_units = [unit_id for unit_id, item in progress.items() if item["status"] == "learning"]
+            if learning_units:
+                lines.extend(["", "Needs learning:"])
+                lines.extend(f"- {titles.get(unit_id, unit_id)}" for unit_id in learning_units)
+        else:
+            lines.extend(["", "Completed attempts: 0", "", "Diagnostic:"])
+            diagnostic = context["diagnostic"]
+            if diagnostic["status"] == "completed":
+                for level in ("strong", "weak", "unknown"):
+                    areas = [area["area"] for area in diagnostic.get("areas", []) if area["level"] == level]
+                    lines.append(f"{level.capitalize()}:")
+                    lines.extend(f"- {area}" for area in areas)
+                    if not areas:
+                        lines.append("- none")
+            else:
+                lines.append(diagnostic["status"])
+
+        sessions, _ = self._read_files("sessions")
+        active = [data["id"] for _, data in sessions if isinstance(data, dict) and data.get("status") == "active"]
+        if active:
+            lines.extend(["", "Active Session:", f"- {active[0]}"])
+
+        default_minutes = context.get("constraints", {}).get("default_session_minutes", 25)
+        candidates = self._candidate_data(default_minutes)["candidates"]
+        lines.extend([
+            "",
+            "Primary focus:",
+            node_titles.get(frontier["focus"]["primary"], frontier["focus"]["primary"]),
+            "",
+            "Next:",
+        ])
+        available = [candidate for candidate in candidates if candidate["availability"] == "available"]
+        for index, candidate in enumerate(available[:3], start=1):
+            progress_label = f" [{candidate['progress']}]" if candidate["progress"] != "untouched" else ""
+            lines.append(f"{index}. {candidate['title']} — {candidate['estimated_minutes']} min{progress_label}")
+        if not available:
+            lines.append("- no available Units")
         return "\n".join(lines)
 
     def state_as_yaml(self) -> str:

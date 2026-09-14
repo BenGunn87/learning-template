@@ -1,0 +1,55 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: progress.schema.yaml
+title: Derived unit progress
+type: object
+propertyNames:
+  pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+additionalProperties:
+  type: object
+  additionalProperties: false
+  required:
+    - status
+    - attempts
+    - mastery
+    - latest_evidence
+    - latest_assessment
+    - last_attempt
+  properties:
+    status:
+      enum:
+        - learning
+        - practice
+        - verified
+    attempts:
+      type: integer
+      minimum: 1
+    mastery:
+      type: object
+      additionalProperties: false
+      required:
+        - recall
+        - understanding
+        - application
+      properties:
+        recall:
+          $ref: '#/$defs/grade'
+        understanding:
+          $ref: '#/$defs/grade'
+        application:
+          $ref: '#/$defs/grade'
+    latest_evidence:
+      type: string
+      pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+    latest_assessment:
+      type: string
+      pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+    last_attempt:
+      type: string
+      format: date-time
+$defs:
+  grade:
+    enum:
+      - failed
+      - hard
+      - good
+      - easy

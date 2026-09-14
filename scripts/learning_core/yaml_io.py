@@ -1,7 +1,9 @@
-"""Small, safe YAML helpers shared by the Stage 1 scripts."""
+"""Small, safe YAML helpers shared by deterministic repository operations."""
 
 from __future__ import annotations
 
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -48,3 +50,50 @@ def dump_yaml(data: Any) -> str:
         default_flow_style=False,
     )
 
+
+def _write_temporary_yaml(path: Path, data: Any) -> Path:
+    """Write and fsync a complete YAML document beside its destination."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        text=True,
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(dump_yaml(data))
+            stream.flush()
+            os.fsync(stream.fileno())
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
+    return temporary
+
+
+def create_yaml(path: Path, data: Any) -> None:
+    """Atomically create a YAML file, refusing to replace existing data."""
+
+    temporary = _write_temporary_yaml(path, data)
+    try:
+        os.link(temporary, path)
+    except FileExistsError:
+        raise YamlFileError(f"refusing to overwrite existing file: {path}") from None
+    except OSError as exc:
+        raise YamlFileError(f"cannot create {path}: {exc}") from exc
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def replace_yaml(path: Path, data: Any) -> None:
+    """Atomically replace a derived document or a validated mutable state file."""
+
+    temporary = _write_temporary_yaml(path, data)
+    try:
+        os.replace(temporary, path)
+    except OSError as exc:
+        raise YamlFileError(f"cannot replace {path}: {exc}") from exc
+    finally:
+        temporary.unlink(missing_ok=True)

@@ -1,0 +1,58 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: assessment.schema.yaml
+title: Assessment event
+type: object
+additionalProperties: false
+required:
+  - format_version
+  - id
+  - evidence
+  - type
+  - created_at
+  - result
+  - gaps
+  - summary
+properties:
+  format_version:
+    const: 1
+  id:
+    type: string
+    pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  evidence:
+    type: string
+    pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  type:
+    const: initial
+  created_at:
+    type: string
+    format: date-time
+  result:
+    type: object
+    additionalProperties: false
+    required:
+      - recall
+      - understanding
+      - application
+    properties:
+      recall:
+        $ref: '#/$defs/grade'
+      understanding:
+        $ref: '#/$defs/grade'
+      application:
+        $ref: '#/$defs/grade'
+  gaps:
+    type: array
+    uniqueItems: true
+    items:
+      type: string
+      minLength: 1
+  summary:
+    type: string
+    minLength: 1
+$defs:
+  grade:
+    enum:
+      - failed
+      - hard
+      - good
+      - easy
