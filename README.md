@@ -61,7 +61,7 @@ python3 scripts/learning.py create-session --minutes 25 --action review:<unit-id
 python3 scripts/learning.py update-checkpoint <session-id> <checkpoint.yaml>
 python3 scripts/learning.py pause-session <session-id>
 python3 scripts/learning.py resume-session <session-id> --minutes 20
-python3 scripts/learning.py recover-session <session-id> --minutes 20
+python3 scripts/learning.py recover-session <session-id> --minutes 20 [--checkpoint <reconstructed-checkpoint.yaml>]
 python3 scripts/learning.py calculate-active-minutes <session-id>
 python3 scripts/learning.py create-unit <unit.yaml>
 python3 scripts/learning.py create-evidence <evidence.yaml>

@@ -87,6 +87,11 @@ def parser() -> argparse.ArgumentParser:
     recover_session.add_argument("session_id", nargs="?")
     recover_session.add_argument("--minutes", type=int, required=True)
     recover_session.add_argument("--recovered-at", help="RFC 3339 timestamp; defaults to local current time")
+    recover_session.add_argument(
+        "--checkpoint",
+        type=Path,
+        help="reconstructed semantic checkpoint YAML, only when no saved checkpoint exists",
+    )
     active_minutes = subcommands.add_parser("calculate-active-minutes", help="sum closed Session segment durations")
     active_minutes.add_argument("session_id")
     create_unit = subcommands.add_parser("create-unit", help="validate and safely create an initialized Unit")
@@ -176,7 +181,13 @@ def main(argv: list[str] | None = None) -> int:
             print(dump_yaml({outcome: str(path.relative_to(repository.root)), "session": data}), end="")
             return 0
         if args.command == "recover-session":
-            path, data, outcome = repository.recover_session(args.session_id, args.minutes, args.recovered_at)
+            checkpoint = load_yaml(args.checkpoint) if args.checkpoint else None
+            path, data, outcome = repository.recover_session(
+                args.session_id,
+                args.minutes,
+                args.recovered_at,
+                checkpoint,
+            )
             print(dump_yaml({outcome: str(path.relative_to(repository.root)), "session": data}), end="")
             return 0
         if args.command == "calculate-active-minutes":

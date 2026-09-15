@@ -248,6 +248,14 @@ class Stage4Test(unittest.TestCase):
         self.assertEqual("recovered", outcome)
         self.assertEqual("2026-09-15T10:08:00+05:00", recovered["segments"][0]["ended_at"])
         self.assertEqual("recovered", recovered["segments"][0]["end_reason"])
+        self.assertEqual(
+            {
+                "recovered_at": "2026-09-16T09:00:00+05:00",
+                "segment_closed_at": "2026-09-15T10:08:00+05:00",
+                "source": "checkpoint",
+            },
+            recovered["last_recovery"],
+        )
         self.assertEqual(8, self.repository.calculate_active_minutes(session["id"]))
         _, repeated, repeat_outcome = self.repository.recover_session(
             session["id"], 20, "2026-09-16T09:00:00+05:00"
@@ -259,6 +267,40 @@ class Stage4Test(unittest.TestCase):
         _, session = self.start()
         with self.assertRaisesRegex(ValueError, "user input is required"):
             self.repository.recover_session(session["id"], 20, "2026-09-16T09:00:00+05:00")
+
+    def test_recovery_without_checkpoint_closes_at_segment_start(self) -> None:
+        _, session = self.start()
+        reconstructed = self.checkpoint("study_focus")
+        _, recovered, outcome = self.repository.recover_session(
+            session["id"],
+            20,
+            "2026-09-16T09:00:00+05:00",
+            reconstructed,
+        )
+        self.assertEqual("recovered", outcome)
+        self.assertEqual("2026-09-15T10:00:00+05:00", recovered["segments"][0]["ended_at"])
+        self.assertEqual("2026-09-16T09:00:00+05:00", recovered["segments"][1]["started_at"])
+        self.assertEqual("2026-09-16T09:00:00+05:00", recovered["checkpoint"]["updated_at"])
+        self.assertEqual("study_focus", recovered["checkpoint"]["stage"])
+        self.assertEqual(
+            {
+                "recovered_at": "2026-09-16T09:00:00+05:00",
+                "segment_closed_at": "2026-09-15T10:00:00+05:00",
+                "source": "segment_start",
+            },
+            recovered["last_recovery"],
+        )
+        self.assertEqual(0, self.repository.calculate_active_minutes(session["id"]))
+
+        _, repeated, repeat_outcome = self.repository.recover_session(
+            session["id"],
+            20,
+            "2026-09-16T09:00:00+05:00",
+            reconstructed,
+        )
+        self.assertEqual("already-recovered", repeat_outcome)
+        self.assertEqual(2, len(repeated["segments"]))
+        self.assertEqual(0, self.repository.calculate_active_minutes(session["id"]))
 
     def test_unit_completes_once_across_three_segments(self) -> None:
         _, session = self.start("2026-09-15T10:00:00+05:00")
@@ -370,6 +412,23 @@ class Stage4Test(unittest.TestCase):
             for command in commands:
                 self.assertEqual(0, learning_main(command), command)
         self.assertIn("active_minutes: 10", output.getvalue())
+
+    def test_cli_recovers_without_saved_checkpoint_from_semantic_state(self) -> None:
+        _, session = self.start()
+        checkpoint_path = self.root / "reconstructed-checkpoint.yaml"
+        write_yaml(checkpoint_path, self.checkpoint("study_focus"))
+        command = [
+            "--root", str(self.root), "recover-session", session["id"],
+            "--minutes", "20",
+            "--recovered-at", "2026-09-16T09:00:00+05:00",
+            "--checkpoint", str(checkpoint_path),
+        ]
+        with redirect_stdout(StringIO()):
+            self.assertEqual(0, learning_main(command))
+        recovered = yaml.safe_load((self.root / f"sessions/{session['id']}.yaml").read_text(encoding="utf-8"))
+        self.assertEqual("2026-09-15T10:00:00+05:00", recovered["segments"][0]["ended_at"])
+        self.assertEqual("segment_start", recovered["last_recovery"]["source"])
+        self.assertEqual("2026-09-16T09:00:00+05:00", recovered["checkpoint"]["updated_at"])
 
 
 if __name__ == "__main__":

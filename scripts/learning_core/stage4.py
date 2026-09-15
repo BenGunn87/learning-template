@@ -430,6 +430,7 @@ class Stage4RepositoryMixin(Stage3RepositoryMixin):
         session_id: str | None,
         minutes: int,
         recovered_at: str | None = None,
+        checkpoint: dict[str, Any] | None = None,
     ) -> tuple[Path, dict[str, Any], str]:
         if isinstance(minutes, bool) or not isinstance(minutes, int) or minutes <= 0:
             raise ValueError("time budget must be a positive integer")
@@ -441,24 +442,40 @@ class Stage4RepositoryMixin(Stage3RepositoryMixin):
             raise ValueError(f"active Session is {actual_id}, not {session_id}")
         path = self.path(f"sessions/{actual_id}.yaml")
         session = load_yaml(path)
-        checkpoint = session.get("checkpoint")
-        if not isinstance(checkpoint, dict):
-            raise ValueError("active Session has no reliable checkpoint; user input is required for recovery")
         timestamp = recovered_at or self._now()
         self._timestamp(timestamp, "recovery timestamp")
         last_recovery = session.get("last_recovery")
         if isinstance(last_recovery, dict) and last_recovery.get("recovered_at") == timestamp:
             return path, session, "already-recovered"
-        checkpoint_at = checkpoint["updated_at"]
-        if self._timestamp(timestamp) < self._timestamp(checkpoint_at):
-            raise ValueError("recovery timestamp cannot precede the latest checkpoint")
-        self._close_open_segment(session, checkpoint_at, "recovered")
+
+        stored_checkpoint = session.get("checkpoint")
+        if isinstance(stored_checkpoint, dict):
+            if checkpoint is not None:
+                raise ValueError("reconstructed checkpoint is only allowed when no saved checkpoint exists")
+            segment_closed_at = stored_checkpoint["updated_at"]
+            recovery_source = "checkpoint"
+        else:
+            if not isinstance(checkpoint, dict):
+                raise ValueError("active Session has no reliable checkpoint; user input is required for recovery")
+            segment_closed_at = session["segments"][-1]["started_at"]
+            recovery_source = "segment_start"
+
+        if self._timestamp(timestamp) < self._timestamp(segment_closed_at):
+            raise ValueError("recovery timestamp cannot precede the segment close point")
+        self._close_open_segment(session, segment_closed_at, "recovered")
         session["segments"].append(
             {"started_at": timestamp, "ended_at": None, "budget_minutes": minutes, "end_reason": None}
         )
         session["time_budget_minutes"] = minutes
-        session["last_recovery"] = {"recovered_at": timestamp, "checkpoint_at": checkpoint_at}
-        session["checkpoint"]["updated_at"] = timestamp
+        session["last_recovery"] = {
+            "recovered_at": timestamp,
+            "segment_closed_at": segment_closed_at,
+            "source": recovery_source,
+        }
+        if isinstance(stored_checkpoint, dict):
+            session["checkpoint"]["updated_at"] = timestamp
+        else:
+            self._apply_checkpoint(session, checkpoint, timestamp, "in_progress")
         self._raise_issues(self.validate_session(session, self._relative(path)))
         replace_yaml(path, session)
         return path, session, "recovered"

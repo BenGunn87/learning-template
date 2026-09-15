@@ -1,6 +1,6 @@
 ---
 name: resume-session
-description: Resume a paused learning Session or recover a potentially stale active Session from its repository checkpoint.
+description: Resume a paused learning Session or recover a potentially stale active Session from persisted or reconstructed semantic state.
 ---
 
 # Resume or recover a learning Session
@@ -21,4 +21,10 @@ For a potentially stale `active` Session with a checkpoint, explain that recover
 python3 scripts/learning.py recover-session <session-id> --minutes <new-budget>
 ```
 
-If no checkpoint exists, do not invent state. Ask where the user stopped, persist the reconstructed minimum checkpoint only after they answer, and then recover. A Review due date and Unit mastery remain unchanged until completed Evidence and Assessment exist.
+If no checkpoint exists, do not invent state or ask the user to estimate elapsed time. Ask only for the minimum semantic state: current Unit, action, stage, completed steps, selected Resource when known, and any partial interaction. Write that reconstructed state to a temporary checkpoint YAML and pass it directly to recovery:
+
+```bash
+python3 scripts/learning.py recover-session <session-id> --minutes <new-budget> --checkpoint <checkpoint.yaml>
+```
+
+Never call ordinary `update-checkpoint` on the stale segment first. Recovery closes that segment at its own `started_at`, opens the new segment, and only then saves the reconstructed checkpoint with the recovery timestamp. A Review due date and Unit mastery remain unchanged until completed Evidence and Assessment exist.

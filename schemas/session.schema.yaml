@@ -82,14 +82,16 @@ properties:
   last_recovery:
     type: object
     additionalProperties: false
-    required: [recovered_at, checkpoint_at]
+    required: [recovered_at, segment_closed_at, source]
     properties:
       recovered_at:
         type: string
         format: date-time
-      checkpoint_at:
+      segment_closed_at:
         type: string
         format: date-time
+      source:
+        enum: [checkpoint, segment_start]
 allOf:
   - if:
       properties:
