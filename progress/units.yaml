@@ -1,10 +1,14 @@
 frame-a-system-design-problem:
-  status: practice
-  attempts: 1
+  status: verified
+  attempts: 2
   mastery:
     recall: good
     understanding: good
-    application: hard
-  latest_evidence: 2026-09-14-001-initial
-  latest_assessment: 2026-09-14-001-initial-assessment-001
-  last_attempt: '2026-09-14T15:10:42+05:00'
+    application: good
+  latest_evidence: 2026-09-15-001-practice-001
+  latest_assessment: 2026-09-15-001-practice-001-assessment-001
+  last_attempt: '2026-09-15T11:03:14+05:00'
+  review:
+    due: '2026-09-22'
+    interval_days: 7
+    repetitions: 0
