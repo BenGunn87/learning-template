@@ -64,6 +64,31 @@ def parser() -> argparse.ArgumentParser:
     create_session.add_argument("--action", action="append", help="planned action as study:unit, practice:unit, or review:unit")
     create_session.add_argument("--minutes", type=int, required=True)
     create_session.add_argument("--started-at", help="RFC 3339 timestamp; defaults to local current time")
+    subcommands.add_parser("detect-resumable-session", help="detect the one active or paused Session")
+    update_checkpoint = subcommands.add_parser("update-checkpoint", help="persist minimal resumable Session state")
+    update_checkpoint.add_argument("session_id")
+    update_checkpoint.add_argument("input", type=Path, help="checkpoint YAML document")
+    update_checkpoint.add_argument("--updated-at", help="RFC 3339 timestamp; overrides checkpoint.updated_at")
+    update_checkpoint.add_argument(
+        "--action-status",
+        choices=("in_progress", "completed"),
+        default="in_progress",
+        help="execution state for the checkpoint action",
+    )
+    pause_session = subcommands.add_parser("pause-session", help="checkpoint and pause the active Session")
+    pause_session.add_argument("session_id")
+    pause_session.add_argument("--checkpoint", type=Path, help="checkpoint YAML; latest saved checkpoint is used when omitted")
+    pause_session.add_argument("--paused-at", help="RFC 3339 timestamp; defaults to local current time")
+    resume_session = subcommands.add_parser("resume-session", help="resume the paused logical Session with a new segment")
+    resume_session.add_argument("session_id", nargs="?")
+    resume_session.add_argument("--minutes", type=int, required=True)
+    resume_session.add_argument("--resumed-at", help="RFC 3339 timestamp; defaults to local current time")
+    recover_session = subcommands.add_parser("recover-session", help="recover a potentially stale active Session")
+    recover_session.add_argument("session_id", nargs="?")
+    recover_session.add_argument("--minutes", type=int, required=True)
+    recover_session.add_argument("--recovered-at", help="RFC 3339 timestamp; defaults to local current time")
+    active_minutes = subcommands.add_parser("calculate-active-minutes", help="sum closed Session segment durations")
+    active_minutes.add_argument("session_id")
     create_unit = subcommands.add_parser("create-unit", help="validate and safely create an initialized Unit")
     create_unit.add_argument("input", type=Path, help="YAML document to create")
     create_evidence = subcommands.add_parser("create-evidence", help="validate and append immutable Evidence")
@@ -73,7 +98,7 @@ def parser() -> argparse.ArgumentParser:
     subcommands.add_parser("update-progress", help="rebuild derived Progress from Evidence and Assessments")
     complete_session = subcommands.add_parser("complete-session", help="complete an active Session after Progress update")
     complete_session.add_argument("session_id")
-    complete_session.add_argument("--evidence", action="append", required=True, dest="evidence_ids")
+    complete_session.add_argument("--evidence", action="append", default=[], dest="evidence_ids")
     complete_session.add_argument("--completed-at", help="RFC 3339 timestamp; defaults to local current time")
     status = subcommands.add_parser("status", help="render the current learning status")
     status.add_argument("--on-date", help="ISO date used to display due Reviews")
@@ -128,6 +153,34 @@ def main(argv: list[str] | None = None) -> int:
                     actions.append({"type": action_type, "unit": unit})
             path, data = repository.create_session(args.unit, args.minutes, args.started_at, actions)
             print(dump_yaml({"created": str(path.relative_to(repository.root)), "session": data}), end="")
+            return 0
+        if args.command == "detect-resumable-session":
+            print(dump_yaml(repository.detect_resumable_session()), end="")
+            return 0
+        if args.command == "update-checkpoint":
+            path, data, outcome = repository.update_checkpoint(
+                args.session_id,
+                load_yaml(args.input),
+                args.updated_at,
+                args.action_status,
+            )
+            print(dump_yaml({outcome: str(path.relative_to(repository.root)), "session": data}), end="")
+            return 0
+        if args.command == "pause-session":
+            checkpoint = load_yaml(args.checkpoint) if args.checkpoint else None
+            path, data, outcome = repository.pause_session(args.session_id, checkpoint, args.paused_at)
+            print(dump_yaml({outcome: str(path.relative_to(repository.root)), "session": data}), end="")
+            return 0
+        if args.command == "resume-session":
+            path, data, outcome = repository.resume_session(args.session_id, args.minutes, args.resumed_at)
+            print(dump_yaml({outcome: str(path.relative_to(repository.root)), "session": data}), end="")
+            return 0
+        if args.command == "recover-session":
+            path, data, outcome = repository.recover_session(args.session_id, args.minutes, args.recovered_at)
+            print(dump_yaml({outcome: str(path.relative_to(repository.root)), "session": data}), end="")
+            return 0
+        if args.command == "calculate-active-minutes":
+            print(dump_yaml({"session_id": args.session_id, "active_minutes": repository.calculate_active_minutes(args.session_id)}), end="")
             return 0
         if args.command == "create-unit":
             path, outcome = repository.create_unit(load_yaml(args.input))

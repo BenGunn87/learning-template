@@ -15,4 +15,6 @@ Choose the weak mastery dimension shown by the latest Assessment:
 
 Test the same ability with a materially new prompt. Do not repeat an earlier prompt verbatim, show a Resource, restart Study Focus, or give the answer before the user attempts it. Ask for one to four concise takeaways after the answer and preserve the factual interaction for Evidence.
 
+Immediately checkpoint the selected prompt or scenario and update the checkpoint after each substantive answer or stage change. If this Practice is resumed, continue that exact prompt and retained partial answers; do not generate a new scenario. An unfinished answer remains checkpoint state and is not Evidence.
+
 Create `Evidence(type=practice)` with `target.dimension`, `based_on.evidence` pointing to the latest Evidence, and `practice.prompt/answer`. Do not assess mastery or calculate Review dates here; return control to `run-session` for Assessment and deterministic Progress update.

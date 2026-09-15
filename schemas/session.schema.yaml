@@ -11,6 +11,8 @@ required:
   - status
   - plan
   - actual
+  - segments
+  - checkpoint
   - evidence
   - completed_at
 properties:
@@ -23,18 +25,15 @@ properties:
     type: string
     format: date-time
   time_budget_minutes:
+    description: Budget for the latest Session segment.
     type: integer
     minimum: 1
   status:
-    enum:
-      - active
-      - completed
+    enum: [active, paused, completed]
   plan:
     type: object
     additionalProperties: false
-    required:
-      - unit
-      - actions
+    required: [unit, actions]
     properties:
       unit:
         type: string
@@ -44,13 +43,11 @@ properties:
         minItems: 1
         uniqueItems: true
         items:
-          $ref: '#/$defs/action'
+          $ref: '#/$defs/planned_action'
   actual:
     type: object
     additionalProperties: false
-    required:
-      - unit
-      - actions
+    required: [unit, actions]
     properties:
       unit:
         oneOf:
@@ -59,9 +56,18 @@ properties:
             pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
       actions:
         type: array
-        uniqueItems: true
+        minItems: 1
         items:
-          $ref: '#/$defs/action'
+          $ref: '#/$defs/actual_action'
+  segments:
+    type: array
+    minItems: 1
+    items:
+      $ref: '#/$defs/segment'
+  checkpoint:
+    oneOf:
+      - type: 'null'
+      - $ref: '#/$defs/checkpoint'
   evidence:
     type: array
     uniqueItems: true
@@ -73,42 +79,44 @@ properties:
       - type: 'null'
       - type: string
         format: date-time
+  last_recovery:
+    type: object
+    additionalProperties: false
+    required: [recovered_at, checkpoint_at]
+    properties:
+      recovered_at:
+        type: string
+        format: date-time
+      checkpoint_at:
+        type: string
+        format: date-time
 allOf:
   - if:
       properties:
-        status:
-          const: active
+        status: {const: active}
+      required: [status]
     then:
       properties:
-        actual:
-          properties:
-            unit:
-              type: 'null'
-            actions:
-              maxItems: 0
-        evidence:
-          maxItems: 0
-        completed_at:
-          type: 'null'
+        completed_at: {type: 'null'}
   - if:
       properties:
-        status:
-          const: completed
+        status: {const: paused}
+      required: [status]
     then:
       properties:
-        actual:
-          properties:
-            unit:
-              type: string
-            actions:
-              minItems: 1
-        evidence:
-          minItems: 1
+        checkpoint: {$ref: '#/$defs/checkpoint'}
+        completed_at: {type: 'null'}
+  - if:
+      properties:
+        status: {const: completed}
+      required: [status]
+    then:
+      properties:
         completed_at:
           type: string
           format: date-time
 $defs:
-  action:
+  planned_action:
     type: object
     additionalProperties: false
     required: [type, unit]
@@ -118,3 +126,105 @@ $defs:
       unit:
         type: string
         pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  actual_action:
+    type: object
+    additionalProperties: false
+    required: [type, unit, status]
+    properties:
+      type:
+        enum: [study, practice, review]
+      unit:
+        type: string
+        pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+      status:
+        enum: [planned, in_progress, completed]
+  segment:
+    type: object
+    additionalProperties: false
+    required: [started_at, ended_at, budget_minutes, end_reason]
+    properties:
+      started_at:
+        type: string
+        format: date-time
+      ended_at:
+        oneOf:
+          - type: 'null'
+          - type: string
+            format: date-time
+      budget_minutes:
+        type: integer
+        minimum: 1
+      end_reason:
+        oneOf:
+          - type: 'null'
+          - enum: [paused, completed, recovered]
+  checkpoint:
+    type: object
+    additionalProperties: false
+    required: [updated_at, unit, action, stage, completed_steps]
+    properties:
+      updated_at:
+        type: string
+        format: date-time
+      unit:
+        type: string
+        pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+      action:
+        enum: [study, practice, review]
+      stage:
+        type: string
+        pattern: ^[a-z0-9]+(?:[_-][a-z0-9]+)*$
+      completed_steps:
+        type: object
+        propertyNames:
+          pattern: ^[a-z][a-z0-9_]*$
+        additionalProperties:
+          type: boolean
+      resource:
+        $ref: '#/$defs/resource'
+      interaction:
+        $ref: '#/$defs/interaction'
+      note:
+        type: string
+        minLength: 1
+  resource:
+    type: object
+    additionalProperties: false
+    required: [title, url, type, language]
+    properties:
+      title: {type: string, minLength: 1}
+      url:
+        type: string
+        format: uri
+        pattern: ^https?://
+      type:
+        enum: [article, documentation, video, course, book, interactive]
+      language: {type: string, minLength: 2}
+      estimated_minutes: {type: integer, minimum: 1}
+      difficulty:
+        enum: [beginner, intermediate, advanced]
+  interaction:
+    type: object
+    additionalProperties: false
+    minProperties: 1
+    properties:
+      prompt: {type: string, minLength: 1}
+      scenario: {type: string, minLength: 1}
+      answers:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          additionalProperties: false
+          required: [answer]
+          properties:
+            stage:
+              type: string
+              pattern: ^[a-z0-9]+(?:[_-][a-z0-9]+)*$
+            prompt: {type: string, minLength: 1}
+            answer: {type: string, minLength: 1}
+      takeaways:
+        type: array
+        minItems: 1
+        maxItems: 4
+        items: {type: string, minLength: 1}

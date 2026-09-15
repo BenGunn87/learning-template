@@ -395,7 +395,11 @@ class Stage3Test(unittest.TestCase):
             [review_id, study_id],
             "2026-09-21T10:25:00+05:00",
         )
-        self.assertEqual(session["plan"]["actions"], completed["actual"]["actions"])
+        self.assertEqual(
+            session["plan"]["actions"],
+            [{key: action[key] for key in ("type", "unit")} for action in completed["actual"]["actions"]],
+        )
+        self.assertTrue(all(action["status"] == "completed" for action in completed["actual"]["actions"]))
         self.assertEqual([review_id, study_id], completed["evidence"])
 
     def test_status_is_rebuilt_from_files_in_a_new_context(self) -> None:

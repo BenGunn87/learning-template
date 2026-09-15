@@ -568,18 +568,17 @@ Pause относится исключительно к Session.
 
 Если времени не хватило, Unit не разбивается автоматически.
 
-Session создаёт checkpoint.
-
-Следующая Session продолжает ту же Unit.
+Логическая Session создаёт checkpoint и может продолжаться через несколько
+временных segments. Resume сохраняет Session ID и продолжает ту же Unit.
 
 ```text
 Unit: learning
 
-Session A
+Segment A
    ↓
 checkpoint
    ↓
-Session B
+Segment B
    ↓
 continue Unit
 ```
@@ -934,7 +933,12 @@ Frontier — рекомендация, а не запрет.
 
 # 33. Session
 
-Session — один фактический заход на обучение.
+Session — один логический учебный процесс от начала до завершения. Фактические
+заходы хранятся как `segments`; у каждого есть свой budget, `started_at` и
+`ended_at`. Активное время является суммой закрытых segments.
+
+В одном learning repository может существовать не более одной Session со
+статусом `active` или `paused`.
 
 Session может включать:
 
@@ -1023,8 +1027,8 @@ planned:
   study cache-stampede
 
 actual:
-  review cache-invalidation
-  practice cache-invalidation
+  review cache-invalidation: completed
+  study cache-stampede: in_progress
 ```
 
 Изменение плана является нормальным.
@@ -1039,31 +1043,44 @@ actual:
 status: paused
 
 checkpoint:
+  updated_at: 2026-09-15T10:12:00+05:00
   unit: quorum-reads-writes
+  action: study
   stage: study
 
-  progress:
+  completed_steps:
     study_focus_shown: true
-    material_started: true
+    study_completed: false
 
   note: >
     Stopped after section about write quorum.
 ```
 
-Pause не влияет на mastery.
+Checkpoint обновляется после выбора Resource, показа Study Focus, завершения
+Study, каждого содержательного ответа в Recall/Practice, завершения этих
+этапов и любого изменения action/stage. Он хранит только минимальное состояние
+возобновления, а не transcript.
+
+Pause не создаёт Evidence и не влияет на mastery. Budget является ориентиром
+для planner и сам по себе не закрывает segment и не ставит Session на паузу.
 
 ---
 
 # 38. Unexpected Interruption
 
 Если терминал или процесс завершились аварийно, Session может остаться `active`.
+Любая active Session, найденная при новом запуске или команде `session`/`status`,
+считается потенциально stale; временной порог не используется.
 
 Следующая команда `session` должна:
 
 1. обнаружить старую active Session;
 2. предложить восстановление;
-3. при необходимости перевести её в paused;
-4. продолжить работу.
+3. закрыть прерванный segment временем последнего checkpoint;
+4. открыть новый segment с новым budget и продолжить ту же Session.
+
+Если checkpoint отсутствует, система не придумывает состояние и запрашивает у
+пользователя минимальные сведения о месте остановки.
 
 ---
 

@@ -1,5 +1,6 @@
 session:
   default_minutes: 25
+  min_partial_unit_minutes: 10
 
 frontier:
   target_units: 7

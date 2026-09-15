@@ -10,11 +10,11 @@ from jsonschema.exceptions import SchemaError
 from jsonschema.validators import validator_for
 
 from .issues import Issue
-from .stage3 import Stage3RepositoryMixin
+from .stage4 import Stage4RepositoryMixin
 from .yaml_io import YamlFileError, dump_yaml, load_yaml
 
 
-class Repository(Stage3RepositoryMixin):
+class Repository(Stage4RepositoryMixin):
     DOCUMENTS = {
         "learning": Path("learning.yaml"),
         "context": Path("config/context.yaml"),
@@ -405,9 +405,30 @@ class Repository(Stage3RepositoryMixin):
                 lines.append(diagnostic["status"])
 
         sessions, _ = self._read_files("sessions")
-        active = [data["id"] for _, data in sessions if isinstance(data, dict) and data.get("status") == "active"]
-        if active:
-            lines.extend(["", "Active Session:", f"- {active[0]}"])
+        unfinished = [
+            data
+            for _, data in sessions
+            if isinstance(data, dict) and data.get("status") in {"active", "paused"}
+        ]
+        if unfinished:
+            session = unfinished[0]
+            heading = "Active Session (potentially stale):" if session["status"] == "active" else "Paused Session:"
+            lines.extend(["", heading, f"- {session['id']}"])
+            checkpoint = session.get("checkpoint")
+            if isinstance(checkpoint, dict):
+                lines.append(f"  Unit: {titles.get(checkpoint['unit'], checkpoint['unit'])}")
+                lines.append(f"  Action: {checkpoint['action']}")
+                lines.append(f"  Stage: {checkpoint['stage']}")
+                completed = [name for name, value in checkpoint.get("completed_steps", {}).items() if value]
+                if completed:
+                    lines.append(f"  Completed steps: {', '.join(completed)}")
+                if isinstance(checkpoint.get("resource"), dict):
+                    lines.append(f"  Resource: {checkpoint['resource']['title']}")
+                lines.append(f"  Checkpoint: {checkpoint['updated_at']}")
+                lines.append("  Next action: continue from checkpoint")
+            else:
+                lines.append("  Checkpoint: none; user input is required for recovery")
+            lines.append(f"  Active time: {self.calculate_active_minutes(session['id'])} min")
 
         default_minutes = context.get("constraints", {}).get("default_session_minutes", 25)
         candidates = self._candidate_data(default_minutes)["candidates"]
