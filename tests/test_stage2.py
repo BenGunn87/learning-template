@@ -60,6 +60,12 @@ class Stage2Test(unittest.TestCase):
                 "session": {"default_minutes": 25},
                 "frontier": {"target_units": 5, "min_units": 5, "max_units": 10},
                 "diagnostic": {"enabled": True},
+                "review": {
+                    "max_session_share": 0.25,
+                    "estimated_minutes": 5,
+                    "initial_intervals": {"failed": 1, "hard": 3, "good": 7, "easy": 14},
+                    "multipliers": {"hard": 1.5, "good": 2.0, "easy": 3.0},
+                },
             },
         )
         write_yaml(

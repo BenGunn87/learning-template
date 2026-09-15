@@ -538,16 +538,19 @@ learning
 practice
   ↓
 verified
-  ↓
-reviewing
 ```
 
 Возможны возвраты:
 
 ```text
-reviewing → practice
+verified → practice
+verified → learning
 practice → learning
 ```
+
+Цикл интервальных повторений не является состоянием освоения Unit.
+Он хранится независимо в `Progress.review`; наступление due-даты не меняет
+`status`, а результат Review может изменить его.
 
 Важно:
 
@@ -820,12 +823,12 @@ Active Assessment определяется детерминированно по
 ```yaml
 quorum-reads-writes:
 
-  status: reviewing
+  status: verified
 
   mastery:
     recall: good
     understanding: good
-    application: hard
+    application: good
 
   attempts: 2
 
@@ -834,6 +837,7 @@ quorum-reads-writes:
   review:
     due: 2026-09-15
     interval_days: 4
+    repetitions: 1
 ```
 
 Progress можно удалить и пересчитать.

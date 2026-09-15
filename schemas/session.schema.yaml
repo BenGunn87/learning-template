@@ -34,24 +34,36 @@ properties:
     additionalProperties: false
     required:
       - unit
+      - actions
     properties:
       unit:
         type: string
         pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+      actions:
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items:
+          $ref: '#/$defs/action'
   actual:
     type: object
     additionalProperties: false
     required:
       - unit
+      - actions
     properties:
       unit:
         oneOf:
           - type: 'null'
           - type: string
             pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+      actions:
+        type: array
+        uniqueItems: true
+        items:
+          $ref: '#/$defs/action'
   evidence:
     type: array
-    maxItems: 1
     uniqueItems: true
     items:
       type: string
@@ -72,6 +84,8 @@ allOf:
           properties:
             unit:
               type: 'null'
+            actions:
+              maxItems: 0
         evidence:
           maxItems: 0
         completed_at:
@@ -86,8 +100,21 @@ allOf:
           properties:
             unit:
               type: string
+            actions:
+              minItems: 1
         evidence:
           minItems: 1
         completed_at:
           type: string
           format: date-time
+$defs:
+  action:
+    type: object
+    additionalProperties: false
+    required: [type, unit]
+    properties:
+      type:
+        enum: [study, practice, review]
+      unit:
+        type: string
+        pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$

@@ -10,11 +10,11 @@ from jsonschema.exceptions import SchemaError
 from jsonschema.validators import validator_for
 
 from .issues import Issue
-from .stage2 import Stage2RepositoryMixin
+from .stage3 import Stage3RepositoryMixin
 from .yaml_io import YamlFileError, dump_yaml, load_yaml
 
 
-class Repository(Stage2RepositoryMixin):
+class Repository(Stage3RepositoryMixin):
     DOCUMENTS = {
         "learning": Path("learning.yaml"),
         "context": Path("config/context.yaml"),
@@ -23,7 +23,7 @@ class Repository(Stage2RepositoryMixin):
     }
     SCHEMAS = {
         name: Path("schemas") / f"{name}.schema.yaml"
-        for name in (*DOCUMENTS, "unit", "session", "evidence", "assessment", "progress")
+        for name in (*DOCUMENTS, "settings", "unit", "session", "evidence", "assessment", "progress")
     }
     REQUIRED_DIRECTORIES = (
         "config",
@@ -227,6 +227,7 @@ class Repository(Stage2RepositoryMixin):
             settings = load_yaml(self.path("config/settings.yaml"))
         except YamlFileError as exc:
             return [Issue("config/settings.yaml", str(exc))]
+        issues = self.validate_schema("settings", settings, "config/settings.yaml")
         try:
             frontier = settings["frontier"]
             minimum = frontier["min_units"]
@@ -234,15 +235,19 @@ class Repository(Stage2RepositoryMixin):
             maximum = frontier["max_units"]
             minutes = settings["session"]["default_minutes"]
             enabled = settings["diagnostic"]["enabled"]
+            review = settings["review"]
         except (KeyError, TypeError):
-            return [Issue("config/settings.yaml", "required Stage 1 settings are missing")]
-        issues: list[Issue] = []
+            return [Issue("config/settings.yaml", "required settings are missing")]
         if not all(isinstance(value, int) and not isinstance(value, bool) and value > 0 for value in (minimum, target, maximum, minutes)):
             issues.append(Issue("config/settings.yaml", "minute and frontier limits must be positive integers"))
         elif not minimum <= target <= maximum:
             issues.append(Issue("config/settings.yaml", "frontier limits must satisfy min_units <= target_units <= max_units"))
         if not isinstance(enabled, bool):
             issues.append(Issue("config/settings.yaml", "diagnostic.enabled must be boolean"))
+        initial = review.get("initial_intervals", {}) if isinstance(review, dict) else {}
+        if isinstance(initial, dict) and all(isinstance(initial.get(key), int) for key in ("failed", "hard", "good", "easy")):
+            if not initial["failed"] <= initial["hard"] <= initial["good"] <= initial["easy"]:
+                issues.append(Issue("config/settings.yaml", "initial review intervals must increase from failed to easy", "$.review.initial_intervals"))
         return issues
 
     def validate_repository(self) -> list[Issue]:
@@ -317,7 +322,7 @@ class Repository(Stage2RepositoryMixin):
             "candidates": candidates,
         }
 
-    def render_status(self) -> str:
+    def render_status(self, on_date: str | None = None) -> str:
         state, state_issues = self.state()
         if state == "uninitialized":
             return "Learning repository\n\nState: uninitialized\nStart with: init or ‘Хочу изучать …’"
@@ -354,11 +359,27 @@ class Repository(Stage2RepositoryMixin):
             if not verified:
                 lines.append("- none")
 
+            due_reviews = self.get_due_reviews(on_date)
+            lines.extend(["", "Reviews due:"])
+            if due_reviews:
+                for review in due_reviews:
+                    overdue = f" ({review['overdue_days']} days overdue)" if review["overdue_days"] else ""
+                    lines.append(f"- {review['title']} — due {review['due']}{overdue}")
+            else:
+                lines.append("- none")
+
             practice = [unit_id for unit_id, item in progress.items() if item["status"] == "practice"]
             lines.extend(["", "Needs practice:"])
             if practice:
                 for unit_id in practice:
                     lines.append(f"- {titles.get(unit_id, unit_id)}")
+                    weaknesses = [
+                        dimension
+                        for dimension, grade in progress[unit_id]["mastery"].items()
+                        if grade in {"failed", "hard"}
+                    ]
+                    if weaknesses:
+                        lines.append(f"  weakness: {', '.join(weaknesses)}")
                     assessment_id = progress[unit_id]["latest_assessment"]
                     matches = self._find_by_id("assessments", assessment_id)
                     if matches and isinstance(matches[0][1], dict):

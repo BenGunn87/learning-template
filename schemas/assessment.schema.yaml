@@ -22,7 +22,10 @@ properties:
     type: string
     pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
   type:
-    const: initial
+    enum:
+      - initial
+      - practice
+      - review
   created_at:
     type: string
     format: date-time
@@ -49,6 +52,19 @@ properties:
   summary:
     type: string
     minLength: 1
+  review_outcome:
+    $ref: '#/$defs/grade'
+allOf:
+  - if:
+      properties:
+        type:
+          const: review
+      required: [type]
+    then:
+      required: [review_outcome]
+    else:
+      properties:
+        review_outcome: false
 $defs:
   grade:
     enum:

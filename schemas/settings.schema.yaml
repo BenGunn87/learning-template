@@ -1,0 +1,57 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: settings.schema.yaml
+title: Learning repository settings
+type: object
+additionalProperties: false
+required: [session, frontier, diagnostic, review]
+properties:
+  session:
+    type: object
+    additionalProperties: false
+    required: [default_minutes]
+    properties:
+      default_minutes: {type: integer, minimum: 1}
+  frontier:
+    type: object
+    additionalProperties: false
+    required: [target_units, min_units, max_units]
+    properties:
+      target_units: {type: integer, minimum: 1}
+      min_units: {type: integer, minimum: 1}
+      max_units: {type: integer, minimum: 1}
+  diagnostic:
+    type: object
+    additionalProperties: false
+    required: [enabled]
+    properties:
+      enabled: {type: boolean}
+  review:
+    type: object
+    additionalProperties: false
+    required: [max_session_share, estimated_minutes, initial_intervals, multipliers]
+    properties:
+      max_session_share:
+        type: number
+        exclusiveMinimum: 0
+        maximum: 1
+      estimated_minutes: {type: integer, minimum: 1}
+      initial_intervals:
+        $ref: '#/$defs/outcomes'
+      multipliers:
+        type: object
+        additionalProperties: false
+        required: [hard, good, easy]
+        properties:
+          hard: {type: number, minimum: 1}
+          good: {type: number, minimum: 1}
+          easy: {type: number, minimum: 1}
+$defs:
+  outcomes:
+    type: object
+    additionalProperties: false
+    required: [failed, hard, good, easy]
+    properties:
+      failed: {type: integer, minimum: 1}
+      hard: {type: integer, minimum: 1}
+      good: {type: integer, minimum: 1}
+      easy: {type: integer, minimum: 1}

@@ -2,7 +2,7 @@
 
 Git-based template for learning one large topic through short, adaptive study sessions. The repository is the source of truth: Codex makes semantic learning decisions, while Python scripts validate and render deterministic state.
 
-Stage 1 implements repository bootstrap and `init`. Stage 2 adds the first complete study Session: Unit materialization, Resource-guided study, Active Recall, Practice, immutable Evidence, Assessment, derived Progress, and repository-backed status. Reviews remain intentionally out of scope.
+Stage 1 implements repository bootstrap and `init`. Stage 2 adds the first complete study Session. Stage 3 adds gap-targeted Practice, due Reviews, configurable spaced-repetition intervals, multi-action Session plans, and repository-backed review status. Unit mastery remains `learning`, `practice`, or `verified`; review scheduling is stored independently in `Progress.review`.
 
 ## Setup
 
@@ -40,10 +40,13 @@ python3 scripts/learning.py validate
 python3 scripts/learning.py validate graph
 python3 scripts/learning.py candidates
 python3 scripts/learning.py session-candidates --minutes 25
+python3 scripts/learning.py get-practice-units
+python3 scripts/learning.py get-due-reviews
+python3 scripts/learning.py plan-session-candidates --minutes 25
 python3 scripts/learning.py status
 ```
 
-The `run-session` Skill normally orchestrates the internal Stage 2 commands, so users only need to say, for example:
+The `run-session` Skill normally orchestrates the internal commands, so users only need to say, for example:
 
 ```text
 У меня есть 25 минут.
@@ -53,6 +56,7 @@ The deterministic write operations are also available for Skills and development
 
 ```bash
 python3 scripts/learning.py create-session --unit <unit-id> --minutes 25
+python3 scripts/learning.py create-session --minutes 25 --action review:<unit-id> --action study:<unit-id>
 python3 scripts/learning.py create-unit <unit.yaml>
 python3 scripts/learning.py create-evidence <evidence.yaml>
 python3 scripts/learning.py create-assessment <assessment.yaml>
@@ -68,4 +72,4 @@ python3 scripts/learning.py complete-session <session-id> --evidence <evidence-i
 python3 -m unittest discover -s tests -v
 ```
 
-See `docs/SPEC.md` for the full MVP architecture, `docs/PLAN_STAGE_1.md` for the Stage 1 boundary, and `docs/PLAN_STAGE_2.md` for the first complete Session.
+See `docs/SPEC.md` for the full MVP architecture and `docs/PLAN_STAGE_*.md` for the implementation stages.

@@ -46,6 +46,23 @@ additionalProperties:
     last_attempt:
       type: string
       format: date-time
+    review:
+      type: object
+      additionalProperties: false
+      required: [due, interval_days, repetitions]
+      properties:
+        last:
+          type: string
+          format: date
+        due:
+          type: string
+          format: date
+        interval_days:
+          type: integer
+          minimum: 1
+        repetitions:
+          type: integer
+          minimum: 0
 $defs:
   grade:
     enum:
