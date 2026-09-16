@@ -1,0 +1,50 @@
+format_version: 1
+id: 2026-09-16-003
+started_at: '2026-09-16T16:09:32+05:00'
+time_budget_minutes: 20
+status: paused
+plan:
+  unit: model-data-and-access-patterns
+  actions:
+  - type: study
+    unit: model-data-and-access-patterns
+actual:
+  unit: model-data-and-access-patterns
+  actions:
+  - type: study
+    unit: model-data-and-access-patterns
+    status: in_progress
+segments:
+- started_at: '2026-09-16T16:09:32+05:00'
+  ended_at: '2026-09-16T16:09:32+05:00'
+  budget_minutes: 25
+  end_reason: recovered
+- started_at: '2026-09-16T16:16:11+05:00'
+  ended_at: '2026-09-16T16:18:50+05:00'
+  budget_minutes: 20
+  end_reason: paused
+checkpoint:
+  unit: model-data-and-access-patterns
+  action: study
+  stage: study
+  completed_steps:
+    resource_selected: true
+    study_focus_shown: true
+    study_completed: false
+    recall_completed: false
+    practice_completed: false
+  resource:
+    title: Understand data models
+    url: https://learn.microsoft.com/en-us/azure/architecture/data-guide/technology-choices/understand-data-store-models
+    type: article
+    language: en
+    estimated_minutes: 12
+    difficulty: intermediate
+  note: Пользователь поставил сессию на паузу во время чтения выбранного материала.
+  updated_at: '2026-09-16T16:18:50+05:00'
+evidence: []
+completed_at: null
+last_recovery:
+  recovered_at: '2026-09-16T16:16:11+05:00'
+  segment_closed_at: '2026-09-16T16:09:32+05:00'
+  source: segment_start

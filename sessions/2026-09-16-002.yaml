@@ -1,0 +1,78 @@
+format_version: 1
+id: 2026-09-16-002
+started_at: '2026-09-16T15:41:47+05:00'
+time_budget_minutes: 25
+status: completed
+plan:
+  unit: estimate-workload-and-capacity
+  actions:
+  - type: practice
+    unit: estimate-workload-and-capacity
+actual:
+  unit: estimate-workload-and-capacity
+  actions:
+  - type: practice
+    unit: estimate-workload-and-capacity
+    status: completed
+segments:
+- started_at: '2026-09-16T15:41:47+05:00'
+  ended_at: '2026-09-16T16:07:33+05:00'
+  budget_minutes: 25
+  end_reason: completed
+checkpoint:
+  unit: estimate-workload-and-capacity
+  action: practice
+  stage: completed
+  completed_steps:
+    prompt_selected: true
+    answer_completed: true
+    takeaways_completed: true
+  interaction:
+    scenario: "Социальная лента обслуживает 10 000 000 DAU. Каждый пользователь в\
+      \ среднем\nделает 100 чтений ленты и 0,2 записи комментария в сутки. В самый\
+      \ нагруженный\nчас происходит 30% всех суточных операций; считай, что соотношение\
+      \ чтений и\nзаписей в этот час не меняется. Средний ответ чтения — 5 KB, одна\
+      \ запись —\n1 KB. Комментарии хранятся 2 года, replication factor = 3, overhead\
+      \ индексов\n= 50%. Один экземпляр приложения устойчиво обслуживает 5 000 read\
+      \ RPS, а\nсуммарный внешний канал — 10 Gbit/s.\n\nИспользуй десятичные единицы:\
+      \ 1 KB = 1000 B, 1 TB = 10^12 B. Сжатие и\nпротокольные накладные расходы игнорируй.\n\
+      \nПокажи формулы и единицы и оцени:\n1. средний и пиковый read/write RPS;\n\
+      2. пиковую исходящую и входящую пропускную способность;\n3. объём хранения комментариев\
+      \ за 2 года с репликацией и индексами;\n4. какое ограничение проявится первым,\
+      \ что ты изменишь в архитектуре и\n   оправдывают ли эти числа шардирование\
+      \ данных.\n"
+    answers:
+    - stage: application
+      prompt: 'Покажи формулы и оцени средний и пиковый read/write RPS, пиковую
+
+        пропускную способность, хранение за два года и первый архитектурный
+
+        предел.
+
+        '
+      answer: '1) avr read  RPS = 10*10^6*100/86400 = 11574RPS
+
+        max read RPS = 10*10^6*100*0.3/3600 = 83333.3RPS
+
+        avr write RPS = 23.15RPS
+
+        max write RPS = 166.66RPS
+
+        2) input = 1.33Mbit/s
+
+        output = 3.33Gbit/s
+
+        3) 6.57Tb
+
+        4) Первым проявится ограничение на количество read RPS, поэтому нужен балансировшик
+        и горизонтальное мастабирование. Шардирование не оправдано, так как на требуется
+        не так много места для хранения данных
+
+        '
+    takeaways:
+    - Пропускную способность сети и ресурсы машин определять по пиковой нагрузке.
+    - Для хранения данных учитывать срок хранения.
+  updated_at: '2026-09-16T16:07:33+05:00'
+evidence:
+- 2026-09-16-002-practice-001
+completed_at: '2026-09-16T16:07:33+05:00'
