@@ -3,16 +3,29 @@ id: 2026-09-15-001
 started_at: '2026-09-15T10:47:13+05:00'
 time_budget_minutes: 25
 status: completed
+
 plan:
   unit: frame-a-system-design-problem
   actions:
-  - type: practice
-    unit: frame-a-system-design-problem
+    - type: practice
+      unit: frame-a-system-design-problem
+
 actual:
   unit: frame-a-system-design-problem
   actions:
-  - type: practice
-    unit: frame-a-system-design-problem
+    - type: practice
+      unit: frame-a-system-design-problem
+      status: completed
+
+segments:
+  - started_at: '2026-09-15T10:47:13+05:00'
+    ended_at: '2026-09-15T10:47:13+05:00'
+    budget_minutes: 25
+    end_reason: completed
+
+checkpoint: null
+
 evidence:
-- 2026-09-15-001-practice-001
+  - 2026-09-15-001-practice-001
+
 completed_at: '2026-09-15T11:04:03+05:00'
