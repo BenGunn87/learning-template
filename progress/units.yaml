@@ -1,13 +1,17 @@
 estimate-workload-and-capacity:
-  status: practice
-  attempts: 1
+  status: verified
+  attempts: 2
   mastery:
     recall: hard
     understanding: good
-    application: hard
-  latest_evidence: 2026-09-16-001-initial-001
-  latest_assessment: 2026-09-16-001-initial-001-assessment-001
-  last_attempt: '2026-09-16T14:44:42+05:00'
+    application: good
+  latest_evidence: 2026-09-16-002-practice-001
+  latest_assessment: 2026-09-16-002-practice-001-assessment-001
+  last_attempt: '2026-09-16T16:06:05+05:00'
+  review:
+    due: '2026-09-19'
+    interval_days: 3
+    repetitions: 0
 frame-a-system-design-problem:
   status: verified
   attempts: 3
