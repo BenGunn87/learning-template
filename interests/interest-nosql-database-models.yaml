@@ -8,7 +8,9 @@ related_nodes:
 - document-databases
 - wide-column-databases
 - graph-databases
-status: pending
+status: active
 history:
 - status: pending
   at: '2026-09-18T14:29:44+05:00'
+- status: active
+  at: '2026-09-18T14:45:00+05:00'

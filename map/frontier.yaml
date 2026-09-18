@@ -1,64 +1,43 @@
 format_version: 1
 
 focus:
-  primary: design-process
+  primary: data-modeling
   secondary:
-    - data-systems
-    - reliability-and-operations
+    - architecture-decomposition
+    - sql-and-nosql
+    - replication
 
 units:
-  - id: frame-a-system-design-problem
-    title: Frame a system design problem
-    nodes:
-      - design-process
-      - requirements-analysis
-      - functional-nonfunctional-requirements
-      - tradeoff-analysis
-    goal: >
-      Научиться превращать размытое описание продукта в границы задачи,
-      ключевые сценарии, качественные требования и явные компромиссы.
-    estimated_minutes: 25
-    priority: high
-
-  - id: estimate-workload-and-capacity
-    title: Estimate workload and capacity
-    nodes:
-      - capacity-estimation
-      - latency-throughput
-    goal: >
-      Делать приближённые расчёты RPS, пиков, объёма хранения и пропускной
-      способности, достаточные для выбора архитектурного направления.
-    estimated_minutes: 25
-    priority: high
-    blocked_by:
-      - frame-a-system-design-problem
-
-  - id: trace-a-request-through-the-system
-    title: Trace a request through the system
-    nodes:
-      - networking-basics
-      - communication
-      - compute-and-services
-      - data-systems
-    goal: >
-      Построить целостную картину пути запроса от клиента через сеть и сервис
-      до данных и отметить основные точки задержки и отказа.
-    estimated_minutes: 25
-    priority: high
-
   - id: model-data-and-access-patterns
-    title: Model data and access patterns
+    title: Practice data modeling from access patterns
     nodes:
       - data-modeling
       - transactions
       - sql-and-nosql
     goal: >
-      Выводить модель данных и необходимые гарантии из сценариев чтения
-      и записи, не выбирая технологию только по её категории.
+      Закрепить применение: по пользовательским сценариям выделять паттерны
+      чтения и записи, границы атомарности и требования к согласованности,
+      а затем обосновывать модель данных и класс хранилища.
     estimated_minutes: 25
     priority: high
-    blocked_by:
-      - frame-a-system-design-problem
+    routing_reasons:
+      - type: primary-route
+      - type: context
+
+  - id: decompose-a-backend-system
+    title: Decompose a backend system
+    nodes:
+      - architecture-decomposition
+      - service-architecture
+      - tradeoff-analysis
+    goal: >
+      Разложить backend-систему на компоненты, потоки данных и границы
+      ответственности, связав декомпозицию с требованиями и компромиссами.
+    estimated_minutes: 25
+    priority: high
+    routing_reasons:
+      - type: primary-route
+      - type: context
 
   - id: choose-storage-and-indexes
     title: Choose storage and indexes
@@ -66,39 +45,80 @@ units:
       - storage-selection
       - indexing
     goal: >
-      Сравнить подходящие хранилища и индексы по запросам, согласованности,
-      стоимости записи, масштабу и эксплуатационным рискам.
+      Сравнить подходящие хранилища и индексы по паттернам доступа,
+      гарантиям, стоимости записи, масштабу и эксплуатационным рискам.
     estimated_minutes: 25
-    priority: medium
+    priority: high
     blocked_by:
       - model-data-and-access-patterns
+    routing_reasons:
+      - type: primary-route
+      - type: context
 
-  - id: scale-a-stateless-service
-    title: Scale a stateless service
+  - id: compare-document-and-wide-column-databases
+    title: Compare document and wide-column databases
     nodes:
-      - stateless-services
-      - load-balancing
-      - bottleneck-analysis
-      - horizontal-scaling
+      - document-databases
+      - wide-column-databases
+      - sql-and-nosql
     goal: >
-      Объяснить, когда горизонтальное масштабирование помогает, как в нём
-      участвует балансировщик и почему сначала нужно найти узкое место.
+      Сравнить документную и wide-column модели через форму данных,
+      паттерны запросов, ключи партиционирования, масштабирование и типичные
+      компромиссы выбора.
     estimated_minutes: 25
     priority: medium
     blocked_by:
-      - estimate-workload-and-capacity
-      - trace-a-request-through-the-system
+      - choose-storage-and-indexes
+    routing_reasons:
+      - type: interest
+        interest: interest-nosql-database-models
+      - type: context
 
-  - id: design-for-partial-failures
-    title: Design for partial failures
+  - id: model-connected-data-with-graph-databases
+    title: Model connected data with graph databases
     nodes:
-      - failure-models
-      - timeout-retry-circuit-breaker
-      - observability
+      - graph-databases
+      - data-modeling
     goal: >
-      Спроектировать поведение сервиса при медленной или недоступной
-      зависимости с помощью таймаутов, ограниченных повторов и наблюдаемости.
+      Понять, когда связи и обходы становятся главным паттерном доступа,
+      смоделировать данные как узлы и рёбра и сравнить графовый подход с
+      альтернативными моделями хранения.
     estimated_minutes: 25
     priority: medium
     blocked_by:
-      - trace-a-request-through-the-system
+      - choose-storage-and-indexes
+    routing_reasons:
+      - type: interest
+        interest: interest-nosql-database-models
+      - type: context
+
+  - id: partition-data-and-handle-hotspots
+    title: Partition data and handle hotspots
+    nodes:
+      - data-partitioning
+      - hot-partitions
+    goal: >
+      Выбирать ключ разбиения по паттернам доступа, оценивать равномерность
+      распределения нагрузки и предлагать способы устранения горячих партиций.
+    estimated_minutes: 25
+    priority: medium
+    blocked_by:
+      - choose-storage-and-indexes
+    routing_reasons:
+      - type: primary-route
+      - type: context
+
+  - id: replicate-data-across-nodes
+    title: Replicate data across nodes
+    nodes:
+      - replication
+      - leader-follower-replication
+    goal: >
+      Объяснить цели репликации, сравнить синхронную и асинхронную запись
+      и разобрать влияние lag и failover на доступность и сохранность данных.
+    estimated_minutes: 25
+    priority: medium
+    routing_reasons:
+      - type: primary-route
+      - type: context
+      - type: diagnostic
