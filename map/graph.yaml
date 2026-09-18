@@ -155,6 +155,24 @@ nodes:
     summary: Сравнение моделей и эксплуатационных свойств классов хранилищ.
     importance: core
     tags: [data]
+  - id: document-databases
+    title: Document databases
+    type: concept
+    summary: Документная модель данных, вложенные структуры, запросы, индексы и типичные компромиссы.
+    importance: supporting
+    tags: [data, nosql]
+  - id: wide-column-databases
+    title: Wide-column databases
+    type: concept
+    summary: Модель широких столбцов, проектирование по паттернам доступа, партиционирование и масштабирование.
+    importance: supporting
+    tags: [data, nosql, distributed]
+  - id: graph-databases
+    title: Graph databases
+    type: concept
+    summary: Узлы, рёбра, обходы графа, языки запросов и сценарии связных данных.
+    importance: supporting
+    tags: [data, nosql]
   - id: transactions
     title: Transactions
     type: topic
@@ -361,6 +379,9 @@ edges:
   - {from: data-modeling, to: data-systems, type: part-of}
   - {from: storage-selection, to: data-systems, type: part-of}
   - {from: sql-and-nosql, to: storage-selection, type: part-of}
+  - {from: document-databases, to: sql-and-nosql, type: part-of}
+  - {from: wide-column-databases, to: sql-and-nosql, type: part-of}
+  - {from: graph-databases, to: sql-and-nosql, type: part-of}
   - {from: transactions, to: data-systems, type: part-of}
   - {from: indexing, to: data-systems, type: part-of}
   - {from: data-partitioning, to: data-systems, type: part-of}

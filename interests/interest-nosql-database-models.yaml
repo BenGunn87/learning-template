@@ -1,0 +1,14 @@
+format_version: 1
+id: interest-nosql-database-models
+created_at: '2026-09-18T14:29:44+05:00'
+source: user
+request: Хочу лучше разобраться в document databases, wide-column databases и graph
+  databases. Добавь это в темы для изучения
+related_nodes:
+- document-databases
+- wide-column-databases
+- graph-databases
+status: pending
+history:
+- status: pending
+  at: '2026-09-18T14:29:44+05:00'
