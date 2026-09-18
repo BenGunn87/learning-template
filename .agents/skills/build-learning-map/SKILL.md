@@ -25,4 +25,4 @@ python3 scripts/learning.py validate graph
 
 Resolve every validation error before continuing.
 
-When an explicit Interest requires a missing concept, add only the nearest meaningful layer needed to link that Interest. Apply a small unambiguous additive delta with `expand-graph`; propose a large or ambiguous graph delta to the user before changing the Graph. Do not eagerly build product-specific subtrees.
+When an explicit Interest requires a missing concept, expand integration-first: search for a semantically suitable existing node or branch before creating a parent, attach new concepts to that branch when possible, and add only the nearest meaningful layer. Apply a small unambiguous anchored delta with `expand-graph`. A disconnected or new top-level branch is a structural delta; explain why it is separate, propose it to the user, and use `expand-graph --allow-unanchored` only after confirmation. Do not eagerly build parallel taxonomies or product-specific subtrees.

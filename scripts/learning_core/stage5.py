@@ -346,7 +346,32 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         replace_yaml(path, interest)
         return path, interest, "updated"
 
-    def expand_graph(self, delta: Any) -> dict[str, Any]:
+    @staticmethod
+    def _unanchored_added_nodes(
+        graph: dict[str, Any], existing_node_ids: set[str], added_node_ids: set[str]
+    ) -> set[str]:
+        adjacency: dict[str, set[str]] = {
+            node_id: set()
+            for node_id in existing_node_ids | added_node_ids
+        }
+        for edge in graph.get("edges", []):
+            if not isinstance(edge, dict):
+                continue
+            source, target = edge.get("from"), edge.get("to")
+            if isinstance(source, str) and isinstance(target, str):
+                adjacency.setdefault(source, set()).add(target)
+                adjacency.setdefault(target, set()).add(source)
+
+        reachable = set(existing_node_ids)
+        pending = list(existing_node_ids)
+        while pending:
+            current = pending.pop()
+            for neighbor in adjacency.get(current, set()) - reachable:
+                reachable.add(neighbor)
+                pending.append(neighbor)
+        return added_node_ids - reachable
+
+    def expand_graph(self, delta: Any, allow_unanchored: bool = False) -> dict[str, Any]:
         if not isinstance(delta, dict) or set(delta) != {"nodes", "edges"}:
             raise ValueError("graph delta must contain exactly nodes and edges")
         if not isinstance(delta["nodes"], list) or not isinstance(delta["edges"], list):
@@ -373,6 +398,12 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
                 added_edges.append(deepcopy(edge))
                 existing_edges.add(key)
         self._raise_issues(self.validate_graph(graph))
+        unanchored = self._unanchored_added_nodes(graph, set(existing_nodes), set(added_nodes))
+        if unanchored and not allow_unanchored:
+            raise ValueError(
+                "Graph delta introduces a new component not anchored to the existing graph. "
+                "Attach it to an existing node or explicitly approve a new root branch."
+            )
         replace_yaml(self.path("map/graph.yaml"), graph)
         return {"added_nodes": added_nodes, "added_edges": added_edges}
 

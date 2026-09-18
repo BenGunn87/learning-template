@@ -130,6 +130,22 @@ class Stage5Test(unittest.TestCase):
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
+    def add_existing_storage_branch(self) -> None:
+        graph = self.repository.read("graph")
+        graph["nodes"].extend(
+            [
+                {"id": "data-systems", "title": "Data systems", "type": "area", "importance": "core"},
+                {
+                    "id": "storage-selection",
+                    "title": "Storage selection",
+                    "type": "topic",
+                    "importance": "supporting",
+                },
+            ]
+        )
+        graph["edges"].append({"from": "storage-selection", "to": "data-systems", "type": "part-of"})
+        write_yaml(self.root / "map/graph.yaml", graph)
+
     def attempt(
         self,
         evidence_type: str,
@@ -372,21 +388,24 @@ class Stage5Test(unittest.TestCase):
             )
 
     def test_interest_graph_expansion_activation_and_routing_reason(self) -> None:
+        self.add_existing_storage_branch()
         delta = {
             "nodes": [
-                {"id": "data-models", "title": "Data models", "type": "area", "importance": "supporting"},
                 {"id": "document-databases", "title": "Document databases", "type": "concept", "importance": "supporting"},
                 {"id": "wide-column-databases", "title": "Wide-column databases", "type": "concept", "importance": "supporting"},
                 {"id": "graph-databases", "title": "Graph databases", "type": "concept", "importance": "supporting"},
             ],
             "edges": [
-                {"from": "document-databases", "to": "data-models", "type": "part-of"},
-                {"from": "wide-column-databases", "to": "data-models", "type": "part-of"},
-                {"from": "graph-databases", "to": "data-models", "type": "part-of"},
+                {"from": "document-databases", "to": "storage-selection", "type": "part-of"},
+                {"from": "wide-column-databases", "to": "storage-selection", "type": "part-of"},
+                {"from": "graph-databases", "to": "storage-selection", "type": "part-of"},
             ],
         }
         result = self.repository.expand_graph(delta)
-        self.assertEqual(4, len(result["added_nodes"]))
+        self.assertEqual(3, len(result["added_nodes"]))
+        graph = self.repository.read("graph")
+        self.assertNotIn("data-models", {node["id"] for node in graph["nodes"]})
+        self.assertTrue(all(edge in graph["edges"] for edge in delta["edges"]))
         interest = {
             "format_version": 1,
             "id": "interest-non-relational-databases",
@@ -415,6 +434,71 @@ class Stage5Test(unittest.TestCase):
         routed = next(item for item in candidates if item["id"] == "unit-3")
         self.assertEqual([interest["id"]], routed["related_interests"])
         self.assertEqual([], self.repository.validate_repository())
+
+    def test_automatic_disconnected_subtree_is_rejected_without_writing(self) -> None:
+        original = self.repository.read("graph")
+        delta = {
+            "nodes": [
+                {"id": "new-area", "title": "New area", "type": "area", "importance": "supporting"},
+                {"id": "new-concept", "title": "New concept", "type": "concept", "importance": "supporting"},
+            ],
+            "edges": [{"from": "new-concept", "to": "new-area", "type": "part-of"}],
+        }
+
+        with self.assertRaisesRegex(ValueError, "new component not anchored to the existing graph"):
+            self.repository.expand_graph(delta)
+
+        self.assertEqual(original, self.repository.read("graph"))
+
+    def test_anchored_subtree_is_accepted(self) -> None:
+        delta = {
+            "nodes": [
+                {"id": "child-topic", "title": "Child topic", "type": "topic", "importance": "supporting"},
+                {"id": "new-concept", "title": "New concept", "type": "concept", "importance": "supporting"},
+            ],
+            "edges": [
+                {"from": "child-topic", "to": "replication", "type": "part-of"},
+                {"from": "new-concept", "to": "child-topic", "type": "part-of"},
+            ],
+        }
+
+        result = self.repository.expand_graph(delta)
+
+        self.assertEqual(["child-topic", "new-concept"], result["added_nodes"])
+        self.assertEqual([], self.repository.validate_graph())
+
+    def test_explicitly_approved_structural_delta_may_add_a_root(self) -> None:
+        delta = {
+            "nodes": [
+                {"id": "new-area", "title": "New area", "type": "area", "importance": "supporting"},
+                {"id": "new-concept", "title": "New concept", "type": "concept", "importance": "supporting"},
+            ],
+            "edges": [{"from": "new-concept", "to": "new-area", "type": "part-of"}],
+        }
+
+        result = self.repository.expand_graph(delta, allow_unanchored=True)
+
+        self.assertEqual(["new-area", "new-concept"], result["added_nodes"])
+        self.assertEqual([], self.repository.validate_graph())
+
+    def test_existing_multiple_roots_remain_valid(self) -> None:
+        self.add_existing_storage_branch()
+
+        self.assertEqual([], self.repository.validate_graph())
+        result = self.repository.expand_graph(
+            {
+                "nodes": [
+                    {
+                        "id": "document-databases",
+                        "title": "Document databases",
+                        "type": "concept",
+                        "importance": "supporting",
+                    }
+                ],
+                "edges": [{"from": "document-databases", "to": "storage-selection", "type": "part-of"}],
+            }
+        )
+        self.assertEqual(["document-databases"], result["added_nodes"])
 
     def test_stage5_frontier_requires_explainable_routing(self) -> None:
         frontier = self.repository.read("frontier")

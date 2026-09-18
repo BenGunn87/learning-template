@@ -426,11 +426,13 @@ add minimal meaningful graph layer
 Например:
 
 ```text
-data-models
+existing storage-selection
 ├── document-databases
 ├── wide-column-databases
 └── graph-databases
 ```
+
+Сначала используй подходящую существующую ветку. Создавай нового parent только тогда, когда подходящего существующего parent нет.
 
 Не создавай сразу большую детальную ветку про MongoDB/Cassandra/Neo4j.
 
@@ -441,9 +443,9 @@ Add the nearest meaningful layer only.
 Expand further as learning progresses.
 ```
 
-Небольшое однозначное расширение graph можно применять автоматически.
+Небольшое однозначное расширение graph можно применять автоматически, если новые nodes остаются связанными с существующим graph.
 
-Крупное или неоднозначное изменение должно быть сначала предложено пользователю как graph delta.
+Крупное, неоднозначное или создающее новую top-level ветку изменение должно быть сначала предложено пользователю как structural graph delta. После подтверждения такой delta применяется явно с `expand-graph --allow-unanchored`.
 
 ---
 

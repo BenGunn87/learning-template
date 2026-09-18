@@ -73,11 +73,12 @@ python3 scripts/learning.py create-assessment <assessment.yaml>
 python3 scripts/learning.py create-interest <interest.yaml>
 python3 scripts/learning.py update-interest <interest-id> --status satisfied
 python3 scripts/learning.py expand-graph <graph-delta.yaml>
+python3 scripts/learning.py expand-graph <structural-graph-delta.yaml> --allow-unanchored
 python3 scripts/learning.py update-progress
 python3 scripts/learning.py complete-session <session-id> --evidence <evidence-id>
 ```
 
-`state` reports `uninitialized`, `partial`, or `initialized`. Validation is read-only. Evidence and Assessment Events are create-only; Gaps and Interests preserve lifecycle history; Session checkpoint state is atomically replaceable; Progress and Frontier remain derived. A repeated `init` must not overwrite an initialized topic or existing Primary Data. One repository may contain at most one Session whose status is `active` or `paused`.
+`state` reports `uninitialized`, `partial`, or `initialized`. Validation is read-only. Evidence and Assessment Events are create-only; Gaps and Interests preserve lifecycle history; Session checkpoint state is atomically replaceable; Progress and Frontier remain derived. Automatic `expand-graph` deltas must connect new nodes to the existing Graph; `--allow-unanchored` is reserved for an explicitly approved structural delta. A repeated `init` must not overwrite an initialized topic or existing Primary Data. One repository may contain at most one Session whose status is `active` or `paused`.
 
 ## Tests
 

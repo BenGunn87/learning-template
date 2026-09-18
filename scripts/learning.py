@@ -136,6 +136,11 @@ def parser() -> argparse.ArgumentParser:
     impact.add_argument("node")
     expand_graph = subcommands.add_parser("expand-graph", help="apply a validated additive graph delta")
     expand_graph.add_argument("input", type=Path, help="YAML with nodes and edges arrays")
+    expand_graph.add_argument(
+        "--allow-unanchored",
+        action="store_true",
+        help="apply an explicitly approved structural delta that creates a new root branch",
+    )
     routing = subcommands.add_parser("update-routing-metadata", help="refresh Gap impact and activate serviced Interests")
     routing.add_argument("--at", help="RFC 3339 update timestamp")
     subcommands.add_parser("update-progress", help="rebuild derived Progress from Evidence and Assessments")
@@ -278,7 +283,7 @@ def main(argv: list[str] | None = None) -> int:
             print(dump_yaml(repository.prerequisite_impact(args.node)), end="")
             return 0
         if args.command == "expand-graph":
-            print(dump_yaml(repository.expand_graph(load_yaml(args.input))), end="")
+            print(dump_yaml(repository.expand_graph(load_yaml(args.input), allow_unanchored=args.allow_unanchored)), end="")
             return 0
         if args.command == "update-routing-metadata":
             print(dump_yaml(repository.update_routing_metadata(args.at)), end="")

@@ -9,7 +9,18 @@ Use this workflow only for an explicit request such as “хочу глубже 
 
 Read `map/graph.yaml`, `schemas/interest.schema.yaml`, and current `interests/`. Find the nearest existing Graph Nodes that faithfully represent the request. Use `inspect-related-nodes` when relationships are unclear.
 
-If the Graph is too coarse, prepare the smallest meaningful additive layer. Apply a small unambiguous YAML delta with `expand-graph`; for a large or ambiguous change, show the proposed delta and ask before applying it. Do not create an exhaustive vendor or implementation subtree merely because it might become useful later.
+Graph expansion is integration-first. Before creating any parent, topic, or area node, search the existing Graph for semantic attachment candidates. Prefer, in order:
+
+```text
+reuse an existing node
+→ attach a new leaf to an existing branch
+→ add a new intermediate node
+→ add a new top-level area
+```
+
+Do not add a grouping node when an existing node already represents the same or a sufficiently close learning dimension. Add an intermediate parent only when no existing node is a reasonable semantic parent, the parent is a genuinely distinct concept rather than a synonym or rephrasing, and it improves the current hierarchy instead of starting a parallel taxonomy. Small automatic expansion must remain anchored to the pre-existing Graph.
+
+If the Graph is too coarse, prepare the smallest meaningful additive layer and apply a small, unambiguous, anchored YAML delta with `expand-graph`. A new disconnected or top-level branch is a structural delta: explain why it is genuinely separate, show the proposal, request user confirmation, and only then use `expand-graph --allow-unanchored`. Treat a new top-level area as the most expensive option. Do not create an exhaustive vendor or implementation subtree merely because it might become useful later.
 
 Create one Interest YAML with:
 
