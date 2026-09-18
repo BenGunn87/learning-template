@@ -130,7 +130,17 @@ class Stage5Test(unittest.TestCase):
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
-    def attempt(self, evidence_type: str, day: str, grade: str, previous: str | None = None) -> str:
+    def attempt(
+        self,
+        evidence_type: str,
+        day: str,
+        grade: str,
+        previous: str | None = None,
+        *,
+        result: dict[str, str] | None = None,
+        evaluated: dict[str, dict[str, list[str]]] | None = None,
+        include_evaluated: bool = True,
+    ) -> str:
         _, session = self.repository.create_session("practice-quorum", 25, f"{day}T10:00:00+05:00")
         evidence_id = f"{session['id']}-{evidence_type}-001"
         common = {
@@ -173,7 +183,10 @@ class Stage5Test(unittest.TestCase):
                 "answer": "An incomplete review answer.",
             }
         self.repository.create_evidence(evidence)
-        result = {"recall": "good", "understanding": "good", "application": grade}
+        result = result or {"recall": "good", "understanding": "good", "application": grade}
+        if evaluated is None:
+            dimensions = ("application",) if evidence_type == "practice" else ("recall", "understanding", "application")
+            evaluated = {dimension: {"nodes": ["quorum"]} for dimension in dimensions}
         assessment = {
             "format_version": 1,
             "id": f"{evidence_id}-assessment-001",
@@ -181,16 +194,25 @@ class Stage5Test(unittest.TestCase):
             "type": evidence_type,
             "created_at": f"{day}T10:22:00+05:00",
             "result": result,
-            "gaps": [] if grade in {"good", "easy"} else ["Quorum parameters were not applied correctly."],
+            "gaps": (
+                []
+                if all(value in {"good", "easy"} for value in result.values())
+                else ["A tested quorum dimension needs improvement."]
+            ),
             "summary": "Assessment of quorum application.",
-            "observed_nodes": ["quorum"],
         }
+        if include_evaluated:
+            assessment["evaluated"] = evaluated
         if evidence_type == "review":
             assessment["review_outcome"] = self.repository.calculate_review_outcome(result)
         self.repository.create_assessment(assessment)
         self.repository.rebuild_progress()
         self.repository.complete_session(session["id"], [evidence_id], f"{day}T10:25:00+05:00")
         return evidence_id
+
+    @staticmethod
+    def gap_by_key(gaps: list[dict], node: str, dimension: str) -> dict:
+        return next(gap for gap in gaps if gap["node"] == node and gap["dimension"] == dimension)
 
     def test_gap_lifecycle_blocking_and_no_parent_promotion(self) -> None:
         first = self.attempt("initial", "2026-09-14", "hard")
@@ -222,6 +244,132 @@ class Stage5Test(unittest.TestCase):
         self.assertEqual("confirmed", gap["history"][-1]["status"])
         self.assertEqual(3, len(gap["signals"]))
         self.assertEqual([], self.repository.validate_repository())
+
+    def test_carried_forward_dimension_does_not_confirm_gap(self) -> None:
+        first = self.attempt(
+            "initial",
+            "2026-09-14",
+            "hard",
+            result={"recall": "hard", "understanding": "good", "application": "hard"},
+            evaluated={
+                "recall": {"nodes": ["quorum"]},
+                "application": {"nodes": ["quorum"]},
+            },
+        )
+        self.attempt(
+            "practice",
+            "2026-09-15",
+            "good",
+            first,
+            result={"recall": "hard", "understanding": "good", "application": "good"},
+            evaluated={"application": {"nodes": ["quorum"]}},
+        )
+        gaps = self.repository.list_gaps()
+        recall_gap = self.gap_by_key(gaps, "quorum", "recall")
+        application_gap = self.gap_by_key(gaps, "quorum", "application")
+        self.assertEqual("detected", recall_gap["status"])
+        self.assertEqual(1, len(recall_gap["signals"]))
+        self.assertEqual("resolved", application_gap["status"])
+
+    def test_second_real_evaluation_confirms_gap(self) -> None:
+        first = self.attempt(
+            "initial",
+            "2026-09-14",
+            "hard",
+            result={"recall": "hard", "understanding": "good", "application": "hard"},
+            evaluated={"recall": {"nodes": ["quorum"]}, "application": {"nodes": ["quorum"]}},
+        )
+        self.attempt(
+            "practice",
+            "2026-09-15",
+            "hard",
+            first,
+            result={"recall": "hard", "understanding": "good", "application": "hard"},
+            evaluated={"recall": {"nodes": ["quorum"]}, "application": {"nodes": ["quorum"]}},
+        )
+        recall_gap = self.gap_by_key(self.repository.list_gaps(), "quorum", "recall")
+        self.assertEqual("confirmed", recall_gap["status"])
+        self.assertEqual(2, len(recall_gap["signals"]))
+
+    def test_dimension_to_node_attribution_does_not_create_cross_product(self) -> None:
+        self.attempt(
+            "initial",
+            "2026-09-14",
+            "hard",
+            result={"recall": "hard", "understanding": "good", "application": "hard"},
+            evaluated={
+                "recall": {"nodes": ["quorum"]},
+                "application": {"nodes": ["consensus"]},
+            },
+        )
+        keys = {(gap["node"], gap["dimension"]) for gap in self.repository.list_gaps()}
+        self.assertEqual({("quorum", "recall"), ("consensus", "application")}, keys)
+        signals = self.repository.detect_weak_signals()
+        self.assertEqual(
+            {("quorum", "recall"), ("consensus", "application")},
+            {(signal["node"], signal["dimension"]) for signal in signals},
+        )
+
+    def test_detected_gap_resolves_then_reopens_with_same_id(self) -> None:
+        first = self.attempt(
+            "initial",
+            "2026-09-14",
+            "hard",
+            evaluated={"application": {"nodes": ["quorum"]}},
+        )
+        original = self.gap_by_key(self.repository.list_gaps(), "quorum", "application")
+        second = self.attempt(
+            "practice",
+            "2026-09-15",
+            "good",
+            first,
+            evaluated={"application": {"nodes": ["quorum"]}},
+        )
+        resolved = self.gap_by_key(self.repository.list_gaps(), "quorum", "application")
+        self.assertEqual(original["id"], resolved["id"])
+        self.assertEqual("resolved", resolved["status"])
+        self.assertEqual(["detected", "resolved"], [item["status"] for item in resolved["history"]])
+        self.assertEqual(1, len(resolved["signals"]))
+
+        self.attempt(
+            "review",
+            "2026-09-22",
+            "hard",
+            second,
+            evaluated={"application": {"nodes": ["quorum"]}},
+        )
+        reopened = self.gap_by_key(self.repository.list_gaps(), "quorum", "application")
+        self.assertEqual(original["id"], reopened["id"])
+        self.assertEqual("confirmed", reopened["status"])
+        self.assertEqual(["detected", "resolved", "confirmed"], [item["status"] for item in reopened["history"]])
+        self.assertEqual(2, len(reopened["signals"]))
+
+    def test_legacy_assessment_without_evaluated_stays_valid_and_creates_no_gap(self) -> None:
+        learning = self.repository.read("learning")
+        learning["learning_core"]["version"] = "0.4.0"
+        write_yaml(self.root / "learning.yaml", learning)
+        evidence_id = self.attempt(
+            "initial",
+            "2026-09-14",
+            "hard",
+            include_evaluated=False,
+        )
+        self.assertEqual([], self.repository.list_gaps())
+        self.assertEqual([], self.repository.detect_weak_signals(evidence_id))
+        self.assertEqual([], self.repository.update_gaps_for_evidence(evidence_id))
+
+        learning["learning_core"]["version"] = "0.5.0"
+        write_yaml(self.root / "learning.yaml", learning)
+        self.assertEqual([], self.repository.validate_repository())
+
+    def test_new_stage5_assessment_requires_evaluated(self) -> None:
+        with self.assertRaisesRegex(ValueError, "requires evaluated"):
+            self.attempt(
+                "initial",
+                "2026-09-14",
+                "hard",
+                include_evaluated=False,
+            )
 
     def test_interest_graph_expansion_activation_and_routing_reason(self) -> None:
         delta = {

@@ -783,7 +783,17 @@ result:
   recall: good
   understanding: good
   application: hard
+
+evaluated:
+  recall:
+    nodes: [quorum]
+  understanding:
+    nodes: [quorum]
+  application:
+    nodes: [quorum]
 ```
+
+`result` хранит полное текущее mastery state и может включать перенесённые из предыдущей Assessment значения. `evaluated` содержит только dimensions и Graph Nodes, реально проверенные текущей Evidence; только они могут создавать или обновлять Gap signals. Старые Assessment без `evaluated` остаются валидными, но не используются для новой Gap attribution.
 
 Если оценка пересмотрена:
 

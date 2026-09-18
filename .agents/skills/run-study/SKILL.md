@@ -15,6 +15,6 @@ After the user reports finishing the material:
 2. Give one compact scenario or exercise aligned with the Unit practice goal. Prefer a decision and trade-off explanation over a factual quiz.
 3. Ask the user for two to four concise Takeaways in their own words. Do not write Takeaways for them. Point out a material error and let the user correct it when needed.
 
-Keep the exact prompts and the substance of every user answer available for Evidence. Record factual observations separately. Do not assess mastery, update Progress, or complete the Session in this skill.
+Keep the exact prompts and the substance of every user answer available for Evidence. Retain enough specificity to tell which lowest Graph Nodes each recall, understanding, or application check actually tested; `assess-answer` records that mapping in `Assessment.evaluated`. Record factual observations separately. Do not assess mastery, update Progress, or complete the Session in this skill.
 
 If interrupted before the whole check is complete, leave the interaction only in the checkpoint; it is not Evidence. Follow `../pause-session/SKILL.md` when the user asks to stop.

@@ -59,6 +59,17 @@ properties:
     items:
       type: string
       pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  evaluated:
+    type: object
+    minProperties: 1
+    additionalProperties: false
+    properties:
+      recall:
+        $ref: '#/$defs/evaluation'
+      understanding:
+        $ref: '#/$defs/evaluation'
+      application:
+        $ref: '#/$defs/evaluation'
   review_outcome:
     $ref: '#/$defs/grade'
 allOf:
@@ -79,3 +90,15 @@ $defs:
       - hard
       - good
       - easy
+  evaluation:
+    type: object
+    additionalProperties: false
+    required: [nodes]
+    properties:
+      nodes:
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items:
+          type: string
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$

@@ -107,12 +107,21 @@ def parser() -> argparse.ArgumentParser:
     gap_impact = subcommands.add_parser("update-gap-impact", help="set semantic Gap routing priority within prerequisite constraints")
     gap_impact.add_argument("gap_id")
     gap_impact.add_argument("--impact", required=True, choices=("blocking", "important", "minor"))
-    weak_signals = subcommands.add_parser("detect-weak-signals", help="list weak Assessment signals and candidate graph nodes")
+    weak_signals = subcommands.add_parser("detect-weak-signals", help="list weak signals explicitly attributed by Assessment.evaluated")
     weak_signals.add_argument("--evidence")
     update_gaps = subcommands.add_parser("update-gaps", help="apply one Assessment to Gap lifecycle state")
     update_gaps.add_argument("--evidence", required=True)
-    update_gaps.add_argument("--node", action="append", dest="nodes")
-    update_gaps.add_argument("--dimension", choices=("recall", "understanding", "application"))
+    update_gaps.add_argument(
+        "--node",
+        action="append",
+        dest="nodes",
+        help="optional filter; cannot add a node absent from Assessment.evaluated",
+    )
+    update_gaps.add_argument(
+        "--dimension",
+        choices=("recall", "understanding", "application"),
+        help="optional filter; cannot add a dimension absent from Assessment.evaluated",
+    )
     list_interests = subcommands.add_parser("list-interests", help="list user-declared Interests")
     list_interests.add_argument("--status", choices=("pending", "active", "satisfied", "dismissed"))
     create_interest = subcommands.add_parser("create-interest", help="create a persistent user Interest")

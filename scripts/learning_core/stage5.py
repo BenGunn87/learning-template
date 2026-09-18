@@ -66,6 +66,20 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         for index, node_id in enumerate(assessment.get("observed_nodes", [])):
             if node_id not in known_nodes:
                 issues.append(Issue(relative, f"Assessment references unknown observed node: {node_id}", f"$.observed_nodes[{index}]"))
+        evaluated = assessment.get("evaluated")
+        if isinstance(evaluated, dict):
+            for dimension, evaluation in evaluated.items():
+                if not isinstance(evaluation, dict):
+                    continue
+                for index, node_id in enumerate(evaluation.get("nodes", [])):
+                    if node_id not in known_nodes:
+                        issues.append(
+                            Issue(
+                                relative,
+                                f"Assessment evaluated {dimension} on unknown node: {node_id}",
+                                f"$.evaluated.{dimension}.nodes[{index}]",
+                            )
+                        )
         return issues
 
     def validate_gap(self, gap: Any, relative: str | None = None) -> list[Issue]:
@@ -112,6 +126,27 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
                 assessment = assessment_matches[0][1]
                 if assessment.get("evidence") != evidence_id:
                     issues.append(Issue(relative, "signal Assessment belongs to another Evidence", f"$.signals[{index}]"))
+                evaluated = assessment.get("evaluated")
+                if isinstance(evaluated, dict):
+                    dimension = gap.get("dimension")
+                    evaluated_nodes = evaluated.get(dimension, {}).get("nodes", []) if isinstance(evaluated.get(dimension), dict) else []
+                    if node not in evaluated_nodes:
+                        issues.append(
+                            Issue(
+                                relative,
+                                "signal node/dimension is not attributed by Assessment.evaluated",
+                                f"$.signals[{index}]",
+                            )
+                        )
+                    assessed_result = assessment.get("result", {}).get(dimension)
+                    if signal.get("result") != assessed_result:
+                        issues.append(
+                            Issue(
+                                relative,
+                                "signal result does not match its evaluated Assessment result",
+                                f"$.signals[{index}].result",
+                            )
+                        )
             for node_index, observed in enumerate(signal.get("observed_nodes", [])):
                 if known_nodes and observed not in known_nodes:
                     issues.append(Issue(relative, f"signal references unknown node: {observed}", f"$.signals[{index}].observed_nodes[{node_index}]"))
@@ -121,8 +156,8 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         status = gap.get("status")
         if status == "detected" and len(set(evidence_ids)) != 1:
             issues.append(Issue(relative, "status=detected requires exactly one independent weak signal", "$.signals"))
-        if status in {"confirmed", "resolved"} and len(set(evidence_ids)) < 2:
-            issues.append(Issue(relative, f"status={status} requires two independent weak signals", "$.signals"))
+        if status == "confirmed" and len(set(evidence_ids)) < 2:
+            issues.append(Issue(relative, "status=confirmed requires two independent weak signals", "$.signals"))
         if gap.get("routing_impact") == "blocking" and status != "confirmed":
             issues.append(Issue(relative, "only a confirmed Gap may be blocking", "$.routing_impact"))
         if isinstance(node, str) and status == "confirmed":
@@ -139,7 +174,11 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
             issues.append(Issue(relative, "Gap history must start with detected", "$.history[0].status"))
         if history and isinstance(history[-1], dict) and history[-1].get("status") != status:
             issues.append(Issue(relative, "latest history status must match Gap status", "$.history"))
-        allowed_transitions = {"detected": {"confirmed"}, "confirmed": {"resolved"}, "resolved": {"confirmed"}}
+        allowed_transitions = {
+            "detected": {"confirmed", "resolved"},
+            "confirmed": {"resolved"},
+            "resolved": {"confirmed"},
+        }
         for index in range(1, len(history)):
             previous = history[index - 1].get("status") if isinstance(history[index - 1], dict) else None
             current = history[index].get("status") if isinstance(history[index], dict) else None
@@ -337,21 +376,6 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         replace_yaml(self.path("map/graph.yaml"), graph)
         return {"added_nodes": added_nodes, "added_edges": added_edges}
 
-    def _lowest_unit_nodes(self, unit_id: str) -> list[str]:
-        path = self.path(f"units/{unit_id}.yaml")
-        unit = load_yaml(path)
-        selected = set(unit.get("nodes", []))
-        graph = self.read("graph")
-        parents = {
-            edge["to"]
-            for edge in graph.get("edges", [])
-            if isinstance(edge, dict)
-            and edge.get("type") == "part-of"
-            and edge.get("from") in selected
-            and edge.get("to") in selected
-        }
-        return sorted(selected - parents) or sorted(selected)
-
     def detect_weak_signals(self, evidence_id: str | None = None) -> list[dict[str, Any]]:
         assessments, issues = self._read_files("assessments")
         self._raise_issues(issues)
@@ -363,9 +387,14 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
             if len(matches) != 1:
                 continue
             evidence = matches[0][1]
-            nodes = self._lowest_unit_nodes(evidence["unit"])
-            for dimension, result in assessment.get("result", {}).items():
-                if result in WEAK_GRADES:
+            evaluated = assessment.get("evaluated")
+            if not isinstance(evaluated, dict):
+                continue
+            for dimension, evaluation in evaluated.items():
+                result = assessment.get("result", {}).get(dimension)
+                if result not in WEAK_GRADES or not isinstance(evaluation, dict):
+                    continue
+                for node_id in evaluation.get("nodes", []):
                     signals.append(
                         {
                             "evidence": evidence["id"],
@@ -373,10 +402,11 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
                             "unit": evidence["unit"],
                             "dimension": dimension,
                             "result": result,
-                            "candidate_nodes": nodes,
+                            "node": node_id,
+                            "candidate_nodes": [node_id],
                         }
                     )
-        signals.sort(key=lambda item: (item["evidence"], item["dimension"]))
+        signals.sort(key=lambda item: (item["evidence"], item["dimension"], item["node"]))
         return signals
 
     def _prerequisite_adjacency(self) -> dict[str, set[str]]:
@@ -455,7 +485,6 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         evidence: dict[str, Any],
         node_id: str,
         dimension: str,
-        observed_nodes: list[str],
     ) -> tuple[Path | None, str]:
         result = assessment["result"][dimension]
         existing = self._gap_for_key(node_id, dimension)
@@ -465,7 +494,7 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
                 "evidence": evidence["id"],
                 "assessment": assessment["id"],
                 "result": result,
-                "observed_nodes": list(observed_nodes),
+                "observed_nodes": [node_id],
             }
             if existing is None:
                 gap_id = self._gap_id(node_id, dimension)
@@ -501,14 +530,9 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
             replace_yaml(path, gap)
             return path, "reopened" if old_status == "resolved" else "confirmed" if new_status != old_status else "updated"
 
-        targeted = (
-            result in STRONG_GRADES
-            and evidence.get("type") == "practice"
-            and evidence.get("target", {}).get("dimension") == dimension
-        )
-        if targeted and existing is not None:
+        if result in STRONG_GRADES and existing is not None:
             path, gap = existing
-            if gap["status"] == "confirmed":
+            if gap["status"] in {"detected", "confirmed"}:
                 gap["status"] = "resolved"
                 gap["resolved_at"] = timestamp
                 gap["routing_impact"] = self._routing_impact_for(node_id, "resolved", gap.get("routing_impact"))
@@ -535,19 +559,26 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
             raise ValueError(f"Evidence requires exactly one Assessment: {evidence_id}")
         evidence = evidence_matches[0][1]
         assessment = assessment_matches[0][1]
-        nodes = observed_nodes or self._lowest_unit_nodes(evidence["unit"])
-        unknown = set(nodes) - self._graph_node_ids()
-        if unknown:
-            raise ValueError(f"unknown observed graph nodes: {', '.join(sorted(unknown))}")
-        dimensions = [dimension] if dimension else list(assessment["result"])
-        if any(item not in {"recall", "understanding", "application"} for item in dimensions):
+        evaluated = assessment.get("evaluated")
+        if not isinstance(evaluated, dict):
+            return []
+        node_filter = set(observed_nodes) if observed_nodes else None
+        if node_filter:
+            unknown = node_filter - self._graph_node_ids()
+            if unknown:
+                raise ValueError(f"unknown graph node filters: {', '.join(sorted(unknown))}")
+        if dimension is not None and dimension not in {"recall", "understanding", "application"}:
             raise ValueError(f"unknown mastery dimension: {dimension}")
         changes: list[dict[str, Any]] = []
-        for node_id in nodes:
-            for current_dimension in dimensions:
-                path, outcome = self._apply_gap_signal(
-                    assessment, evidence, node_id, current_dimension, nodes
-                )
+        for current_dimension, evaluation in evaluated.items():
+            if dimension is not None and current_dimension != dimension:
+                continue
+            if not isinstance(evaluation, dict):
+                continue
+            for node_id in evaluation.get("nodes", []):
+                if node_filter is not None and node_id not in node_filter:
+                    continue
+                path, outcome = self._apply_gap_signal(assessment, evidence, node_id, current_dimension)
                 if outcome != "ignored":
                     changes.append(
                         {
@@ -560,10 +591,20 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         return changes
 
     def create_assessment(self, data: Any) -> Path:
+        if isinstance(data, dict) and self._stage5_assessment_required() and not isinstance(data.get("evaluated"), dict):
+            raise ValueError("new Stage 5 Assessment requires evaluated dimension-to-node attribution")
         path = super().create_assessment(data)
         if isinstance(data, dict) and isinstance(data.get("evidence"), str):
-            self.update_gaps_for_evidence(data["evidence"], data.get("observed_nodes"))
+            self.update_gaps_for_evidence(data["evidence"])
         return path
+
+    def _stage5_assessment_required(self) -> bool:
+        try:
+            learning = self.read("learning")
+            version = learning.get("learning_core", {}).get("version", "0.0.0")
+            return tuple(int(part) for part in version.split(".")) >= (0, 5, 0)
+        except (AttributeError, TypeError, ValueError, YamlFileError):
+            return False
 
     def update_routing_metadata(self, at: str | None = None) -> dict[str, Any]:
         timestamp = at or self._now()
