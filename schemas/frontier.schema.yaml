@@ -71,3 +71,39 @@ properties:
           items:
             type: string
             pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+        routing_reasons:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            oneOf:
+              - type: object
+                additionalProperties: false
+                required: [type]
+                properties:
+                  type:
+                    const: primary-route
+              - type: object
+                additionalProperties: false
+                required: [type, gap]
+                properties:
+                  type:
+                    const: gap
+                  gap:
+                    type: string
+                    pattern: ^gap-[a-z0-9]+(?:-[a-z0-9]+)*$
+              - type: object
+                additionalProperties: false
+                required: [type, interest]
+                properties:
+                  type:
+                    const: interest
+                  interest:
+                    type: string
+                    pattern: ^interest-[a-z0-9]+(?:-[a-z0-9]+)*$
+              - type: object
+                additionalProperties: false
+                required: [type]
+                properties:
+                  type:
+                    enum: [context, diagnostic, user-override]

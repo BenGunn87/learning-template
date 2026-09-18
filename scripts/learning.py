@@ -37,7 +37,7 @@ def parser() -> argparse.ArgumentParser:
     validate.add_argument(
         "target",
         nargs="?",
-        choices=("repository", "learning", "context", "graph", "frontier", "settings", "unit", "session", "evidence", "assessment", "progress"),
+        choices=("repository", "learning", "context", "graph", "frontier", "settings", "unit", "session", "evidence", "assessment", "progress", "gap", "interest"),
         default="repository",
     )
     validate.add_argument("identifier", nargs="?", help="id required for Unit, Session, Evidence, or Assessment")
@@ -100,6 +100,35 @@ def parser() -> argparse.ArgumentParser:
     create_evidence.add_argument("input", type=Path, help="YAML document to create")
     create_assessment = subcommands.add_parser("create-assessment", help="validate and append an Assessment")
     create_assessment.add_argument("input", type=Path, help="YAML document to create")
+    list_gaps = subcommands.add_parser("list-gaps", help="list persistent learning Gaps")
+    list_gaps.add_argument("--status", choices=("detected", "confirmed", "resolved"))
+    create_gap = subcommands.add_parser("create-gap", help="create a semantically reviewed Gap")
+    create_gap.add_argument("input", type=Path, help="Gap YAML document")
+    gap_impact = subcommands.add_parser("update-gap-impact", help="set semantic Gap routing priority within prerequisite constraints")
+    gap_impact.add_argument("gap_id")
+    gap_impact.add_argument("--impact", required=True, choices=("blocking", "important", "minor"))
+    weak_signals = subcommands.add_parser("detect-weak-signals", help="list weak Assessment signals and candidate graph nodes")
+    weak_signals.add_argument("--evidence")
+    update_gaps = subcommands.add_parser("update-gaps", help="apply one Assessment to Gap lifecycle state")
+    update_gaps.add_argument("--evidence", required=True)
+    update_gaps.add_argument("--node", action="append", dest="nodes")
+    update_gaps.add_argument("--dimension", choices=("recall", "understanding", "application"))
+    list_interests = subcommands.add_parser("list-interests", help="list user-declared Interests")
+    list_interests.add_argument("--status", choices=("pending", "active", "satisfied", "dismissed"))
+    create_interest = subcommands.add_parser("create-interest", help="create a persistent user Interest")
+    create_interest.add_argument("input", type=Path, help="Interest YAML document")
+    update_interest = subcommands.add_parser("update-interest", help="advance an Interest lifecycle status")
+    update_interest.add_argument("interest_id")
+    update_interest.add_argument("--status", required=True, choices=("active", "satisfied", "dismissed"))
+    update_interest.add_argument("--at", help="RFC 3339 transition timestamp")
+    related = subcommands.add_parser("inspect-related-nodes", help="inspect graph edges and adaptive routing links")
+    related.add_argument("node")
+    impact = subcommands.add_parser("prerequisite-impact", help="compute dependent Frontier Units for a graph node")
+    impact.add_argument("node")
+    expand_graph = subcommands.add_parser("expand-graph", help="apply a validated additive graph delta")
+    expand_graph.add_argument("input", type=Path, help="YAML with nodes and edges arrays")
+    routing = subcommands.add_parser("update-routing-metadata", help="refresh Gap impact and activate serviced Interests")
+    routing.add_argument("--at", help="RFC 3339 update timestamp")
     subcommands.add_parser("update-progress", help="rebuild derived Progress from Evidence and Assessments")
     complete_session = subcommands.add_parser("complete-session", help="complete an active Session after Progress update")
     complete_session.add_argument("session_id")
@@ -205,6 +234,46 @@ def main(argv: list[str] | None = None) -> int:
             path = repository.create_assessment(load_yaml(args.input))
             print(dump_yaml({"created": str(path.relative_to(repository.root))}), end="")
             return 0
+        if args.command == "list-gaps":
+            print(dump_yaml({"gaps": repository.list_gaps(args.status)}), end="")
+            return 0
+        if args.command == "create-gap":
+            path, outcome = repository.create_gap(load_yaml(args.input))
+            print(dump_yaml({outcome: str(path.relative_to(repository.root))}), end="")
+            return 0
+        if args.command == "update-gap-impact":
+            path, data, outcome = repository.update_gap_impact(args.gap_id, args.impact)
+            print(dump_yaml({outcome: str(path.relative_to(repository.root)), "gap": data}), end="")
+            return 0
+        if args.command == "detect-weak-signals":
+            print(dump_yaml({"weak_signals": repository.detect_weak_signals(args.evidence)}), end="")
+            return 0
+        if args.command == "update-gaps":
+            print(dump_yaml({"changes": repository.update_gaps_for_evidence(args.evidence, args.nodes, args.dimension)}), end="")
+            return 0
+        if args.command == "list-interests":
+            print(dump_yaml({"interests": repository.list_interests(args.status)}), end="")
+            return 0
+        if args.command == "create-interest":
+            path, outcome = repository.create_interest(load_yaml(args.input))
+            print(dump_yaml({outcome: str(path.relative_to(repository.root))}), end="")
+            return 0
+        if args.command == "update-interest":
+            path, data, outcome = repository.update_interest(args.interest_id, args.status, args.at)
+            print(dump_yaml({outcome: str(path.relative_to(repository.root)), "interest": data}), end="")
+            return 0
+        if args.command == "inspect-related-nodes":
+            print(dump_yaml(repository.inspect_related_nodes(args.node)), end="")
+            return 0
+        if args.command == "prerequisite-impact":
+            print(dump_yaml(repository.prerequisite_impact(args.node)), end="")
+            return 0
+        if args.command == "expand-graph":
+            print(dump_yaml(repository.expand_graph(load_yaml(args.input))), end="")
+            return 0
+        if args.command == "update-routing-metadata":
+            print(dump_yaml(repository.update_routing_metadata(args.at)), end="")
+            return 0
         if args.command == "update-progress":
             print(dump_yaml(repository.rebuild_progress()), end="")
             return 0
@@ -241,6 +310,14 @@ def main(argv: list[str] | None = None) -> int:
             if args.identifier:
                 raise ValueError("Progress validation does not accept an identifier")
             issues = repository.validate_progress()
+        elif args.target == "gap":
+            if not args.identifier:
+                raise ValueError("Gap validation requires an id")
+            issues = repository.validate_gap(args.identifier)
+        elif args.target == "interest":
+            if not args.identifier:
+                raise ValueError("Interest validation requires an id")
+            issues = repository.validate_interest(args.identifier)
         elif args.target == "settings":
             if args.identifier:
                 raise ValueError("Settings validation does not accept an identifier")

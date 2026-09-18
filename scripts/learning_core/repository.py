@@ -10,11 +10,11 @@ from jsonschema.exceptions import SchemaError
 from jsonschema.validators import validator_for
 
 from .issues import Issue
-from .stage4 import Stage4RepositoryMixin
+from .stage5 import Stage5RepositoryMixin
 from .yaml_io import YamlFileError, dump_yaml, load_yaml
 
 
-class Repository(Stage4RepositoryMixin):
+class Repository(Stage5RepositoryMixin):
     DOCUMENTS = {
         "learning": Path("learning.yaml"),
         "context": Path("config/context.yaml"),
@@ -23,7 +23,7 @@ class Repository(Stage4RepositoryMixin):
     }
     SCHEMAS = {
         name: Path("schemas") / f"{name}.schema.yaml"
-        for name in (*DOCUMENTS, "settings", "unit", "session", "evidence", "assessment", "progress")
+        for name in (*DOCUMENTS, "settings", "unit", "session", "evidence", "assessment", "progress", "gap", "interest")
     }
     REQUIRED_DIRECTORIES = (
         "config",
@@ -220,6 +220,26 @@ class Repository(Stage4RepositoryMixin):
                     issues.append(Issue("map/frontier.yaml", f"blocked_by references unknown unit: {blocker}", f"$.units[{index}].blocked_by[{blocker_index}]"))
                 if blocker == unit.get("id"):
                     issues.append(Issue("map/frontier.yaml", "unit cannot block itself", f"$.units[{index}].blocked_by[{blocker_index}]"))
+            reasons = unit.get("routing_reasons", [])
+            try:
+                learning = self.read("learning")
+                version = learning.get("learning_core", {}).get("version", "0.0.0")
+                stage5_repository = tuple(int(part) for part in version.split(".")) >= (0, 5, 0)
+            except (AttributeError, TypeError, ValueError, YamlFileError):
+                stage5_repository = False
+            if stage5_repository and not reasons:
+                issues.append(Issue("map/frontier.yaml", "Stage 5 Unit requires at least one routing reason", f"$.units[{index}].routing_reasons"))
+            for reason_index, reason in enumerate(reasons):
+                if not isinstance(reason, dict):
+                    continue
+                if reason.get("type") == "gap":
+                    gap_id = reason.get("gap")
+                    if isinstance(gap_id, str) and not self._find_by_id("gaps", gap_id):
+                        issues.append(Issue("map/frontier.yaml", f"routing reason references unknown Gap: {gap_id}", f"$.units[{index}].routing_reasons[{reason_index}].gap"))
+                if reason.get("type") == "interest":
+                    interest_id = reason.get("interest")
+                    if isinstance(interest_id, str) and not self._find_by_id("interests", interest_id):
+                        issues.append(Issue("map/frontier.yaml", f"routing reason references unknown Interest: {interest_id}", f"$.units[{index}].routing_reasons[{reason_index}].interest"))
         return issues
 
     def _validate_settings(self) -> list[Issue]:
@@ -260,6 +280,14 @@ class Repository(Stage4RepositoryMixin):
         issues.extend(read_issues)
         if not read_issues:
             issues.extend(self.validate_document("learning", learning))
+            try:
+                version = learning.get("learning_core", {}).get("version", "0.0.0")
+                if tuple(int(part) for part in version.split(".")) >= (0, 5, 0):
+                    for directory in ("gaps", "interests"):
+                        if not self.path(directory).is_dir():
+                            issues.append(Issue(directory, "required Stage 5 directory is missing"))
+            except (AttributeError, TypeError, ValueError):
+                pass
         issues.extend(self._validate_settings())
 
         state, state_issues = self.state()
@@ -301,24 +329,57 @@ class Repository(Stage4RepositoryMixin):
         for edge in graph["edges"]:
             if edge["type"] == "prerequisite":
                 prerequisites.setdefault(edge["to"], []).append(edge["from"])
+        progress = self.read_progress()
+        unit_documents, _ = self._read_files("units")
+        unit_nodes = {
+            data["id"]: data.get("nodes", [])
+            for _, data in unit_documents
+            if isinstance(data, dict) and isinstance(data.get("id"), str)
+        }
+        verified_nodes = {
+            node_id
+            for unit_id, item in progress.items()
+            if item.get("status") == "verified"
+            for node_id in unit_nodes.get(unit_id, [])
+        }
+        gaps = self.list_gaps()
+        interests = self.list_interests()
+        blocking_nodes = {
+            gap["node"]
+            for gap in gaps
+            if gap.get("status") == "confirmed" and gap.get("routing_impact") == "blocking"
+        }
         candidates = []
         for node in graph["nodes"]:
             if node.get("status", "active") == "deprecated":
                 continue
             required = sorted(prerequisites.get(node["id"], []))
+            unsatisfied = [item for item in required if item not in verified_nodes or item in blocking_nodes]
             candidates.append(
                 {
                     "node": node["id"],
                     "title": node["title"],
                     "type": node["type"],
                     "importance": node.get("importance", "supporting"),
-                    "availability": "available" if not required else "blocked",
+                    "availability": "available" if not unsatisfied else "blocked",
                     "prerequisites": required,
+                    "unsatisfied_prerequisites": unsatisfied,
+                    "gaps": [
+                        gap["id"]
+                        for gap in gaps
+                        if gap.get("node") == node["id"] and gap.get("status") != "resolved"
+                    ],
+                    "interests": [
+                        interest["id"]
+                        for interest in interests
+                        if interest.get("status") in {"pending", "active"} and node["id"] in interest.get("related_nodes", [])
+                    ],
                 }
             )
         candidates.sort(key=lambda item: ({"core": 0, "supporting": 1, "optional": 2}[item["importance"]], item["title"].casefold()))
         return {
             "diagnostic_hypotheses": context["diagnostic"].get("areas", []),
+            "goal": context["goal"],
             "candidates": candidates,
         }
 
@@ -403,6 +464,20 @@ class Repository(Stage4RepositoryMixin):
                         lines.append("- none")
             else:
                 lines.append(diagnostic["status"])
+
+        gaps = self.list_gaps()
+        if gaps:
+            lines.extend(["", "Persistent gaps:"])
+            for gap in gaps:
+                lines.append(
+                    f"- {node_titles.get(gap['node'], gap['node'])} / {gap['dimension']} "
+                    f"— {gap['status']} ({gap['routing_impact']})"
+                )
+
+        interests = self.list_interests()
+        if interests:
+            lines.extend(["", "Interests:"])
+            lines.extend(f"- {interest['request'].strip()} — {interest['status']}" for interest in interests)
 
         sessions, _ = self._read_files("sessions")
         unfinished = [

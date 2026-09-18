@@ -5,7 +5,7 @@ description: Interpret one immutable initial, Practice, or Review Evidence event
 
 # Assess an Evidence event
 
-Read `schemas/assessment.schema.yaml`, the referenced Evidence, its initialized Unit, and the relevant verification goal. Base the Assessment only on demonstrated answers, not on the user's confidence or claimed completion.
+Read `schemas/assessment.schema.yaml`, the referenced Evidence, its initialized Unit, the relevant verification goal, and `map/graph.yaml`. Base the Assessment only on demonstrated answers, not on the user's confidence or claimed completion.
 
 Assign each dimension one fixed value:
 
@@ -14,7 +14,9 @@ Assign each dimension one fixed value:
 - `good`: correct and independently usable understanding;
 - `easy`: precise, fluent understanding with clear transfer or trade-off reasoning.
 
-Add concise Evidence-grounded gaps and a useful summary. Use the same `type` as the Evidence and ID `<evidence-id>-assessment-001`. For Review Evidence, call `calculate-review-outcome` with all three grades and store its result as `review_outcome`; never calculate the interval or due date yourself. Stage the YAML and call `create-assessment`.
+Add concise Evidence-grounded gaps and a useful summary. Set `observed_nodes` to the lowest meaningful Graph Nodes actually tested by this Evidence; do not include a parent merely because it contains the tested concept. Use the same `type` as the Evidence and ID `<evidence-id>-assessment-001`. For Review Evidence, call `calculate-review-outcome` with all three grades and store its result as `review_outcome`; never calculate the interval or due date yourself. Stage the YAML and call `create-assessment`.
+
+`create-assessment` applies each `failed` or `hard` dimension to persistent Gap state. One Evidence contributes at most one independent signal to a given node and dimension. A second independent Evidence confirms the Gap. A successful targeted Practice resolves its confirmed Gap, while a later weak signal reopens the same Gap ID. Inspect the result with `list-gaps`; use `detect-weak-signals --evidence <id>` when the node choice needs review. Never promote child signals to a parent or create a `cross-concept` Gap without semantic evidence from several related child concepts.
 
 For targeted Practice, reassess the target dimension from the new attempt. Carry forward a non-target dimension from the previous Assessment only when the new Evidence neither tests nor contradicts it; do not treat “not asked again” as failure. A Review prompt should be broad enough to support all three required grades while emphasizing the historically weak dimension.
 

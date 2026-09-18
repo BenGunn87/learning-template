@@ -1,4 +1,4 @@
-# Learning System — MVP Specification v0.3
+# Learning System — MVP Specification v0.5
 
 ## 1. Цель
 
@@ -97,6 +97,8 @@ units
 evidence
 assessment-events
 sessions
+gaps
+interests
 ```
 
 Их потеря означает потерю информации.
@@ -144,6 +146,8 @@ learning-topic/
 ├── assessments/
 │
 ├── sessions/
+├── gaps/
+├── interests/
 │
 ├── progress/
 │   └── units.yaml

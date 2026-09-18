@@ -1,0 +1,82 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: gap.schema.yaml
+title: Persistent learning gap
+type: object
+additionalProperties: false
+required:
+  - format_version
+  - id
+  - created_at
+  - node
+  - dimension
+  - status
+  - scope
+  - routing_impact
+  - signals
+  - history
+  - resolved_at
+properties:
+  format_version:
+    const: 1
+  id:
+    type: string
+    pattern: ^gap-[a-z0-9]+(?:-[a-z0-9]+)*$
+  created_at:
+    type: string
+    format: date-time
+  node:
+    type: string
+    pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  dimension:
+    enum: [recall, understanding, application]
+  status:
+    enum: [detected, confirmed, resolved]
+  scope:
+    enum: [local, cross-concept]
+  routing_impact:
+    enum: [blocking, important, minor]
+  signals:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      additionalProperties: false
+      required: [evidence, assessment, result, observed_nodes]
+      properties:
+        evidence:
+          type: string
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+        assessment:
+          type: string
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+        result:
+          enum: [failed, hard]
+        observed_nodes:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  history:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      additionalProperties: false
+      required: [status, at, evidence]
+      properties:
+        status:
+          enum: [detected, confirmed, resolved]
+        at:
+          type: string
+          format: date-time
+        evidence:
+          type: string
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  resolved_at:
+    oneOf:
+      - type: 'null'
+      - type: string
+        format: date-time
+

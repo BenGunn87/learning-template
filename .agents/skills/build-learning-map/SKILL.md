@@ -25,3 +25,4 @@ python3 scripts/learning.py validate graph
 
 Resolve every validation error before continuing.
 
+When an explicit Interest requires a missing concept, add only the nearest meaningful layer needed to link that Interest. Apply a small unambiguous additive delta with `expand-graph`; propose a large or ambiguous graph delta to the user before changing the Graph. Do not eagerly build product-specific subtrees.

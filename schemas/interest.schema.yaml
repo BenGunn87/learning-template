@@ -1,0 +1,51 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: interest.schema.yaml
+title: User-declared learning interest
+type: object
+additionalProperties: false
+required:
+  - format_version
+  - id
+  - created_at
+  - source
+  - request
+  - related_nodes
+  - status
+  - history
+properties:
+  format_version:
+    const: 1
+  id:
+    type: string
+    pattern: ^interest-[a-z0-9]+(?:-[a-z0-9]+)*$
+  created_at:
+    type: string
+    format: date-time
+  source:
+    const: user
+  request:
+    type: string
+    minLength: 1
+  related_nodes:
+    type: array
+    minItems: 1
+    uniqueItems: true
+    items:
+      type: string
+      pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  status:
+    enum: [pending, active, satisfied, dismissed]
+  history:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      additionalProperties: false
+      required: [status, at]
+      properties:
+        status:
+          enum: [pending, active, satisfied, dismissed]
+        at:
+          type: string
+          format: date-time
+
