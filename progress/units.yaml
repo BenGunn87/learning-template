@@ -27,3 +27,13 @@ frame-a-system-design-problem:
     due: '2026-10-06'
     interval_days: 14
     repetitions: 1
+model-data-and-access-patterns:
+  status: practice
+  attempts: 1
+  mastery:
+    recall: hard
+    understanding: good
+    application: hard
+  latest_evidence: 2026-09-16-003-initial-001
+  latest_assessment: 2026-09-16-003-initial-001-assessment-001
+  last_attempt: '2026-09-17T15:57:30+05:00'
