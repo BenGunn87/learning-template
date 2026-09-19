@@ -1,29 +1,13 @@
 format_version: 1
 
 focus:
-  primary: data-modeling
+  primary: storage-selection
   secondary:
     - architecture-decomposition
     - sql-and-nosql
     - replication
 
 units:
-  - id: model-data-and-access-patterns
-    title: Practice data modeling from access patterns
-    nodes:
-      - data-modeling
-      - transactions
-      - sql-and-nosql
-    goal: >
-      Закрепить применение: по пользовательским сценариям выделять паттерны
-      чтения и записи, границы атомарности и требования к согласованности,
-      а затем обосновывать модель данных и класс хранилища.
-    estimated_minutes: 25
-    priority: high
-    routing_reasons:
-      - type: primary-route
-      - type: context
-
   - id: decompose-a-backend-system
     title: Decompose a backend system
     nodes:
@@ -49,8 +33,6 @@ units:
       гарантиям, стоимости записи, масштабу и эксплуатационным рискам.
     estimated_minutes: 25
     priority: high
-    blocked_by:
-      - model-data-and-access-patterns
     routing_reasons:
       - type: primary-route
       - type: context
@@ -118,6 +100,24 @@ units:
       и разобрать влияние lag и failover на доступность и сохранность данных.
     estimated_minutes: 25
     priority: medium
+    routing_reasons:
+      - type: primary-route
+      - type: context
+      - type: diagnostic
+
+  - id: choose-consistency-under-failures
+    title: Choose consistency under failures
+    nodes:
+      - consistency-models
+      - availability-consistency-tradeoff
+      - eventual-consistency
+    goal: >
+      Выбирать необходимые гарантии согласованности для конкретных операций
+      и объяснять их влияние на доступность при задержках и сетевых разделениях.
+    estimated_minutes: 25
+    priority: medium
+    blocked_by:
+      - replicate-data-across-nodes
     routing_reasons:
       - type: primary-route
       - type: context

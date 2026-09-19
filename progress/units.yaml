@@ -28,12 +28,16 @@ frame-a-system-design-problem:
     interval_days: 14
     repetitions: 1
 model-data-and-access-patterns:
-  status: practice
-  attempts: 1
+  status: verified
+  attempts: 3
   mastery:
     recall: hard
     understanding: good
-    application: hard
-  latest_evidence: 2026-09-16-003-initial-001
-  latest_assessment: 2026-09-16-003-initial-001-assessment-001
-  last_attempt: '2026-09-17T15:57:30+05:00'
+    application: good
+  latest_evidence: 2026-09-18-002-practice-001
+  latest_assessment: 2026-09-18-002-practice-001-assessment-001
+  last_attempt: '2026-09-18T16:24:43+05:00'
+  review:
+    due: '2026-09-21'
+    interval_days: 3
+    repetitions: 0
