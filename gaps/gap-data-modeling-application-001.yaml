@@ -1,0 +1,22 @@
+format_version: 1
+id: gap-data-modeling-application-001
+created_at: '2026-09-18T15:59:36+05:00'
+node: data-modeling
+dimension: application
+status: resolved
+scope: local
+routing_impact: important
+signals:
+- evidence: 2026-09-18-001-practice-001
+  assessment: 2026-09-18-001-practice-001-assessment-001
+  result: hard
+  observed_nodes:
+  - data-modeling
+history:
+- status: detected
+  at: '2026-09-18T15:59:36+05:00'
+  evidence: 2026-09-18-001-practice-001
+- status: resolved
+  at: '2026-09-18T16:24:43+05:00'
+  evidence: 2026-09-18-002-practice-001
+resolved_at: '2026-09-18T16:24:43+05:00'

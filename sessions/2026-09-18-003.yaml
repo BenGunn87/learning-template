@@ -1,0 +1,49 @@
+format_version: 1
+id: 2026-09-18-003
+started_at: '2026-09-18T16:29:13+05:00'
+time_budget_minutes: 20
+status: paused
+plan:
+  unit: choose-storage-and-indexes
+  actions:
+  - type: study
+    unit: choose-storage-and-indexes
+actual:
+  unit: choose-storage-and-indexes
+  actions:
+  - type: study
+    unit: choose-storage-and-indexes
+    status: in_progress
+segments:
+- started_at: '2026-09-18T16:29:13+05:00'
+  ended_at: '2026-09-18T16:40:38+05:00'
+  budget_minutes: 20
+  end_reason: paused
+checkpoint:
+  unit: choose-storage-and-indexes
+  action: study
+  stage: study
+  completed_steps:
+    resource_selected: true
+    study_focus_shown: true
+    study_completed: false
+    recall_completed: false
+    practice_completed: false
+    takeaways_completed: false
+  resource:
+    title: Databases and Storage
+    url: https://pratikdhanave.com/blog/posts/system-design-04-databases-and-storage.html
+    type: article
+    language: en
+    estimated_minutes: 14
+    difficulty: intermediate
+  interaction:
+    prompt: 'Во время чтения ответьте себе: какие паттерны доступа и инварианты ограничивают
+      выбор хранилища; как из фильтрации, диапазона и сортировки вывести порядок полей
+      составного индекса; какой ценой для записи, памяти и эксплуатации покупается
+      ускорение чтения.'
+  note: Пауза во время чтения. Материал выбран и Study Focus показан; продолжить с
+    чтения статьи, затем перейти к Active Recall.
+  updated_at: '2026-09-18T16:40:38+05:00'
+evidence: []
+completed_at: null
