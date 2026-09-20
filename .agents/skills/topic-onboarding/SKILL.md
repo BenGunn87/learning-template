@@ -21,7 +21,7 @@ For an uninitialized repository, gather the topic plus the following context in 
 - usual session duration and, if useful, sessions per week;
 - acceptable material languages and preferred resource formats.
 
-Write `learning.yaml` with a durable lowercase kebab-case topic ID, title, core version, and current date. Write `config/context.yaml` against `schemas/context.schema.yaml`, initially setting `diagnostic.status: pending`. Keep dates as `YYYY-MM-DD` strings and preserve all unrelated fields when resuming.
+Write `learning.yaml` with a durable lowercase kebab-case topic ID, title, current core version `0.6.0`, and current date. Ensure the Primary Data directories `gaps/`, `interests/`, and `resources/generated/` exist. Write `config/context.yaml` against `schemas/context.schema.yaml`, initially setting `diagnostic.status: pending`. Keep dates as `YYYY-MM-DD` strings and preserve all unrelated fields when resuming.
 
 Continue the same init flow by reading and following, in order:
 
@@ -30,4 +30,3 @@ Continue the same init flow by reading and following, in order:
 3. `../build-frontier/SKILL.md`
 
 Finish with `python3 scripts/learning.py validate` and `python3 scripts/learning.py status`. Do not begin a full learning Unit during Stage 1.
-

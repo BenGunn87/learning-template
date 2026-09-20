@@ -51,6 +51,15 @@ def dump_yaml(data: Any) -> str:
     )
 
 
+def load_yaml_text(text: str) -> Any:
+    """Load YAML supplied as text while preserving date-looking strings."""
+
+    try:
+        return yaml.load(text, Loader=StringDatesSafeLoader)
+    except yaml.YAMLError as exc:
+        raise YamlFileError(f"cannot parse YAML: {exc}") from exc
+
+
 def _write_temporary_yaml(path: Path, data: Any) -> Path:
     """Write and fsync a complete YAML document beside its destination."""
 
@@ -83,6 +92,32 @@ def create_yaml(path: Path, data: Any) -> None:
         raise YamlFileError(f"refusing to overwrite existing file: {path}") from None
     except OSError as exc:
         raise YamlFileError(f"cannot create {path}: {exc}") from exc
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def create_text(path: Path, content: str) -> None:
+    """Atomically create a UTF-8 text file, refusing to replace existing data."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        text=True,
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            os.link(temporary, path)
+        except FileExistsError:
+            raise YamlFileError(f"refusing to overwrite existing file: {path}") from None
+        except OSError as exc:
+            raise YamlFileError(f"cannot create {path}: {exc}") from exc
     finally:
         temporary.unlink(missing_ok=True)
 

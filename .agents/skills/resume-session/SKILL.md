@@ -13,7 +13,7 @@ For `paused`, briefly show the saved Unit and stage, prefer continuation, and ca
 python3 scripts/learning.py resume-session <session-id> --minutes <new-budget>
 ```
 
-This starts one new segment. Reuse the saved Resource, prompt or scenario, and substantive answers; skip completed steps. Repeating resume while already active must not add a segment.
+This starts one new segment. Reuse the saved Study Mode, Resource order, completion statuses, generated Resource IDs/paths, discussion summary, prompt or scenario, and substantive answers; skip completed Resources and steps. Never automatically regenerate saved material. Repeating resume while already active must not add a segment.
 
 For a potentially stale `active` Session with a checkpoint, explain that recovery will close the interrupted segment at `checkpoint.updated_at`, then call:
 
@@ -21,7 +21,7 @@ For a potentially stale `active` Session with a checkpoint, explain that recover
 python3 scripts/learning.py recover-session <session-id> --minutes <new-budget>
 ```
 
-If no checkpoint exists, do not invent state or ask the user to estimate elapsed time. Ask only for the minimum semantic state: current Unit, action, stage, completed steps, selected Resource when known, and any partial interaction. Write that reconstructed state to a temporary checkpoint YAML and pass it directly to recovery:
+If no checkpoint exists, do not invent state or ask the user to estimate elapsed time. Ask only for the minimum semantic state: current Unit, action, stage, completed steps, Study Mode, ordered Resources and completion states when known, compact discussion summary when applicable, and any partial interaction. Write that reconstructed state to a temporary checkpoint YAML and pass it directly to recovery:
 
 ```bash
 python3 scripts/learning.py recover-session <session-id> --minutes <new-budget> --checkpoint <checkpoint.yaml>

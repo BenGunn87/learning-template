@@ -10,11 +10,11 @@ from jsonschema.exceptions import SchemaError
 from jsonschema.validators import validator_for
 
 from .issues import Issue
-from .stage5 import Stage5RepositoryMixin
+from .stage6 import Stage6RepositoryMixin
 from .yaml_io import YamlFileError, dump_yaml, load_yaml
 
 
-class Repository(Stage5RepositoryMixin):
+class Repository(Stage6RepositoryMixin):
     DOCUMENTS = {
         "learning": Path("learning.yaml"),
         "context": Path("config/context.yaml"),
@@ -23,7 +23,7 @@ class Repository(Stage5RepositoryMixin):
     }
     SCHEMAS = {
         name: Path("schemas") / f"{name}.schema.yaml"
-        for name in (*DOCUMENTS, "settings", "unit", "session", "evidence", "assessment", "progress", "gap", "interest")
+        for name in (*DOCUMENTS, "settings", "unit", "session", "evidence", "assessment", "progress", "gap", "interest", "resource")
     }
     REQUIRED_DIRECTORIES = (
         "config",
@@ -499,6 +499,14 @@ class Repository(Stage5RepositoryMixin):
                     lines.append(f"  Completed steps: {', '.join(completed)}")
                 if isinstance(checkpoint.get("resource"), dict):
                     lines.append(f"  Resource: {checkpoint['resource']['title']}")
+                if isinstance(checkpoint.get("study_mode"), str):
+                    lines.append(f"  Study mode: {checkpoint['study_mode']}")
+                if isinstance(checkpoint.get("resources"), list):
+                    for resource in checkpoint["resources"]:
+                        if not isinstance(resource, dict):
+                            continue
+                        label = resource.get("title") or resource.get("id", "Resource")
+                        lines.append(f"  Resource: {label} ({resource.get('status', 'selected')})")
                 lines.append(f"  Checkpoint: {checkpoint['updated_at']}")
                 lines.append("  Next action: continue from checkpoint")
             else:

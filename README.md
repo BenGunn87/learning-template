@@ -2,7 +2,7 @@
 
 Git-based template for learning one large topic through short, adaptive study sessions. The repository is the source of truth: Codex makes semantic learning decisions, while Python scripts validate and render deterministic state.
 
-Stage 1 implements repository bootstrap and `init`. Stage 2 adds the first complete study Session. Stage 3 adds gap-targeted Practice and spaced Reviews. Stage 4 adds durable checkpoints, pause/resume and crash recovery, timed Session segments, and partially planned Units. Stage 5 adds persistent Gaps, user-declared Interests, adaptive Frontier routing, and explainable routing reasons. Unit mastery remains `learning`, `practice`, or `verified`; pausing never changes it.
+Stage 1 implements repository bootstrap and `init`. Stage 2 adds the first complete study Session. Stage 3 adds gap-targeted Practice and spaced Reviews. Stage 4 adds durable checkpoints, pause/resume and crash recovery, timed Session segments, and partially planned Units. Stage 5 adds persistent Gaps, user-declared Interests, adaptive Frontier routing, and explainable routing reasons. Stage 6 adds external, generated, and hybrid Study Modes, immutable generated learning material, multi-Resource Evidence, and compact Discussion summaries. Unit mastery remains `learning`, `practice`, or `verified`; pausing never changes it.
 
 ## Setup
 
@@ -38,6 +38,7 @@ Repository Skills live in `.agents/skills/` so Codex can discover them automatic
 python3 scripts/learning.py state
 python3 scripts/learning.py validate
 python3 scripts/learning.py validate graph
+python3 scripts/learning.py validate resource <resource-id>
 python3 scripts/learning.py candidates
 python3 scripts/learning.py session-candidates --minutes 25
 python3 scripts/learning.py get-practice-units
@@ -69,6 +70,7 @@ python3 scripts/learning.py recover-session <session-id> --minutes 20 [--checkpo
 python3 scripts/learning.py calculate-active-minutes <session-id>
 python3 scripts/learning.py create-unit <unit.yaml>
 python3 scripts/learning.py create-evidence <evidence.yaml>
+python3 scripts/learning.py create-generated-resource <resource.md>
 python3 scripts/learning.py create-assessment <assessment.yaml>
 python3 scripts/learning.py create-interest <interest.yaml>
 python3 scripts/learning.py update-interest <interest-id> --status satisfied
@@ -78,7 +80,7 @@ python3 scripts/learning.py update-progress
 python3 scripts/learning.py complete-session <session-id> --evidence <evidence-id>
 ```
 
-`state` reports `uninitialized`, `partial`, or `initialized`. Validation is read-only. Evidence and Assessment Events are create-only; Gaps and Interests preserve lifecycle history; Session checkpoint state is atomically replaceable; Progress and Frontier remain derived. Automatic `expand-graph` deltas must connect new nodes to the existing Graph; `--allow-unanchored` is reserved for an explicitly approved structural delta. A repeated `init` must not overwrite an initialized topic or existing Primary Data. One repository may contain at most one Session whose status is `active` or `paused`.
+`state` reports `uninitialized`, `partial`, or `initialized`. Validation is read-only. Evidence, generated Resources, and Assessment Events are create-only; Gaps and Interests preserve lifecycle history; Session checkpoint state is atomically replaceable; Progress and Frontier remain derived. Automatic `expand-graph` deltas must connect new nodes to the existing Graph; `--allow-unanchored` is reserved for an explicitly approved structural delta. A repeated `init` must not overwrite an initialized topic or existing Primary Data. One repository may contain at most one Session whose status is `active` or `paused`.
 
 ## Tests
 

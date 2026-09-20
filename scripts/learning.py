@@ -37,10 +37,10 @@ def parser() -> argparse.ArgumentParser:
     validate.add_argument(
         "target",
         nargs="?",
-        choices=("repository", "learning", "context", "graph", "frontier", "settings", "unit", "session", "evidence", "assessment", "progress", "gap", "interest"),
+        choices=("repository", "learning", "context", "graph", "frontier", "settings", "unit", "session", "evidence", "assessment", "progress", "gap", "interest", "resource"),
         default="repository",
     )
-    validate.add_argument("identifier", nargs="?", help="id required for Unit, Session, Evidence, or Assessment")
+    validate.add_argument("identifier", nargs="?", help="id required for entity-specific validation targets")
     subcommands.add_parser("candidates", help="render technical graph candidates as YAML")
     session_candidates = subcommands.add_parser("session-candidates", help="rank Frontier Units for a time budget")
     session_candidates.add_argument("--minutes", type=int, required=True)
@@ -98,6 +98,11 @@ def parser() -> argparse.ArgumentParser:
     create_unit.add_argument("input", type=Path, help="YAML document to create")
     create_evidence = subcommands.add_parser("create-evidence", help="validate and append immutable Evidence")
     create_evidence.add_argument("input", type=Path, help="YAML document to create")
+    create_resource = subcommands.add_parser(
+        "create-generated-resource",
+        help="validate and persist an immutable generated Markdown Resource",
+    )
+    create_resource.add_argument("input", type=Path, help="Markdown document with YAML frontmatter")
     create_assessment = subcommands.add_parser("create-assessment", help="validate and append an Assessment")
     create_assessment.add_argument("input", type=Path, help="YAML document to create")
     list_gaps = subcommands.add_parser("list-gaps", help="list persistent learning Gaps")
@@ -244,6 +249,14 @@ def main(argv: list[str] | None = None) -> int:
             path = repository.create_evidence(load_yaml(args.input))
             print(dump_yaml({"created": str(path.relative_to(repository.root))}), end="")
             return 0
+        if args.command == "create-generated-resource":
+            try:
+                content = args.input.read_text(encoding="utf-8")
+            except OSError as exc:
+                raise ValueError(f"cannot read {args.input}: {exc}") from exc
+            path, outcome = repository.create_generated_resource(content)
+            print(dump_yaml({outcome: str(path.relative_to(repository.root))}), end="")
+            return 0
         if args.command == "create-assessment":
             path = repository.create_assessment(load_yaml(args.input))
             print(dump_yaml({"created": str(path.relative_to(repository.root))}), end="")
@@ -332,6 +345,10 @@ def main(argv: list[str] | None = None) -> int:
             if not args.identifier:
                 raise ValueError("Interest validation requires an id")
             issues = repository.validate_interest(args.identifier)
+        elif args.target == "resource":
+            if not args.identifier:
+                raise ValueError("Resource validation requires an id")
+            issues = repository.validate_generated_resource(args.identifier)
         elif args.target == "settings":
             if args.identifier:
                 raise ValueError("Settings validation does not accept an identifier")

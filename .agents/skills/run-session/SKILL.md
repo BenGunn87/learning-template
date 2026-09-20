@@ -1,11 +1,11 @@
 ---
 name: run-session
-description: Start or continue a short resumable learning Session when the user has time, asks to study, or invokes session with a minute budget in an initialized learning repository.
+description: Start or continue a short resumable learning Session, including external, generated, and hybrid Study Modes, when the user has time or asks to study.
 ---
 
 # Run a learning Session
 
-Read `docs/SPEC.md` sections 20–28 and 33–39, plus `docs/PLAN_STAGE_4.md`. Treat repository files, not chat memory, as state.
+Read `docs/SPEC.md` sections 20–28 and 33–39, plus `docs/PLAN_STAGE_4.md` and `docs/PLAN_STAGE_6.md`. Treat repository files, not chat memory, as state.
 
 1. Run `python3 scripts/learning.py state`, `validate`, and `detect-resumable-session`. If the repository is uninitialized, offer `init`; if invalid, report the error and stop. Never create a second Session while one is `active` or `paused`.
 2. Resolve the time budget for this visit from the request or Context. If a Session is `paused`, prefer continuation, briefly show its Unit/stage, and follow `../resume-session/SKILL.md`. If it is `active`, treat it as potentially stale and use that Skill's recovery flow. Resume keeps the Session ID and adds a segment with the new budget.
@@ -14,8 +14,8 @@ Read `docs/SPEC.md` sections 20–28 and 33–39, plus `docs/PLAN_STAGE_4.md`. T
 5. Execute each planned or resumed action, including a partial Unit selected by the planner:
    - `review`: load and follow `.agents/skills/run-review/SKILL.md`;
    - `practice`: load and follow `.agents/skills/run-practice/SKILL.md`;
-   - `study`: load `initialize-unit`, `find-resources`, and `run-study` in that order. The user must explicitly choose the Resource.
-6. When an action's full check is finished, persist its checkpoint with `update-checkpoint --action-status completed`, then build one new immutable Evidence using the appropriate schema and an ID `<session-id>-<type>-NNN`. Preserve the user's answers and takeaways as factual content; keep evaluation out of Evidence. Never overwrite earlier Evidence or create it for an unfinished check.
+   - `study`: load `initialize-unit`, then `run-study`. `run-study` presents the Study Modes before preparing Resources and loads `find-resources` only for an external component.
+6. When an action's full check is finished, persist its checkpoint with `update-checkpoint --action-status completed`, then build one new immutable Evidence using the appropriate schema and an ID `<session-id>-<type>-NNN`. Initial Evidence uses canonical `resources[]` copied from the actually studied Session Resources without checkpoint-only `status`; never create new Stage 6 records with legacy `resource`. Preserve the user's answers and takeaways as factual content; keep evaluation out of Evidence. Never overwrite earlier Evidence or create it for an unfinished check.
 7. Load and follow `.agents/skills/assess-answer/SKILL.md` for each new Evidence. Assessment creation updates persistent Gap signals. After completed actions have Evidence and Assessment, run `update-progress` and `update-routing-metadata`, then complete the Session with every new Evidence ID in actual execution order. Rebuild the Frontier when Gap status or impact materially changes the route. A Session may also complete without Evidence when the user stops before any action becomes `in_progress`.
 8. If an action remains unfinished when the user wants to stop, follow `../pause-session/SKILL.md`; budget exhaustion alone never changes Session state. Finally run `status` and summarize the outcome and next options.
 

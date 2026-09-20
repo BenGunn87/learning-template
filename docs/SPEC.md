@@ -60,6 +60,7 @@ Codex выполняет семантическую работу:
 * создание Skeleton Units;
 * инициализацию Unit;
 * поиск материалов;
+* генерацию адаптированных учебных материалов;
 * формирование Study Focus;
 * создание вопросов и практических заданий;
 * анализ ответов;
@@ -99,6 +100,7 @@ assessment-events
 sessions
 gaps
 interests
+generated-resources
 ```
 
 Их потеря означает потерю информации.
@@ -149,6 +151,9 @@ learning-topic/
 ├── gaps/
 ├── interests/
 │
+├── resources/
+│   └── generated/
+│
 ├── progress/
 │   └── units.yaml
 │
@@ -181,7 +186,7 @@ topic:
   title: System Design
 
 learning_core:
-  version: 0.3.0
+  version: 0.6.0
 
 created_at: 2026-09-11
 ```
@@ -618,6 +623,39 @@ Unit = what we learn
 Resource = how we learn it this time
 ```
 
+Перед подготовкой материала пользователь выбирает Study Mode для текущей
+Session/попытки:
+
+```text
+external
+generated
+hybrid
+```
+
+Study Mode не является свойством Unit: одна Unit в разных попытках может
+изучаться по-разному. Codex может кратко рекомендовать режим, но выбор остаётся
+за пользователем.
+
+Каноническая Resource-модель разделяет происхождение и формат:
+
+```yaml
+type: external | generated
+format: article | documentation | video | course | book | interactive
+```
+
+`external` использует найденный внешний материал. `generated` использует
+адаптированную к Unit и контексту пользователя учебную статью. `hybrid`
+содержит два независимых Resource — внешний и сгенерированный — в выбранном
+пользователем порядке; сгенерированный материал не является автоматическим
+summary внешнего.
+
+Generated Resource хранится целиком в `resources/generated/<resource-id>.md`
+со стабильным ID и YAML frontmatter. Это Primary Data: rebuild не генерирует,
+не заменяет и не переписывает такие документы. Внешние статьи целиком в
+repository не копируются. Источники, использованные для проверки generated
+статьи, записываются в её frontmatter и не смешиваются с external Resource,
+который непосредственно изучал пользователь.
+
 При инициализации Codex предлагает обычно 2–3 варианта.
 
 Для каждого показываются:
@@ -636,7 +674,8 @@ Resource = how we learn it this time
 
 его можно заменить без изменения Unit.
 
-Фактически использованный Resource записывается в историю Session/Evidence.
+Фактически использованные Resources записываются в порядке изучения в
+Session/Evidence. Отклонённые до начала изучения варианты в историю не входят.
 
 ---
 
@@ -665,11 +704,15 @@ Skeleton
    ↓
 Initialize
    ↓
-Resource Selection
+Study Mode Selection
+   ↓
+Resource Preparation
    ↓
 Study Focus
    ↓
 Study
+   ↓
+Optional Discussion
    ↓
 Active Recall
    ↓
@@ -684,7 +727,13 @@ Progress Update
 Review Scheduling
 ```
 
-Просмотр материала сам по себе не подтверждает mastery.
+Просмотр материала и Discussion сами по себе не подтверждают mastery.
+Discussion относится к поддерживаемому Study, а не к Assessment. Значимый
+разговор может оставить компактный `discussion_summary` в Session с вопросами,
+уточнениями, misconceptions, possible Gaps, явно выраженными Interests и
+`assessment_focus`, но не transcript. Он не создаёт Evidence, не обновляет
+Progress и не подтверждает Gap. Возможная слабость становится Gap только через
+последующие независимые Recall/Practice, Evidence и Assessment.
 
 ---
 
@@ -734,10 +783,14 @@ Evidence содержит:
 * answer;
 * takeaways пользователя;
 * обнаруженные raw observations;
-* использованный Resource;
+* упорядоченный список фактически использованных Resources;
 * ссылки на Session.
 
 После создания Evidence не изменяется.
+
+Новая форма использует `resources[]`. Исторический одиночный `resource` остаётся
+валидным без миграции; новые записи используют `type` для происхождения и
+`format` для формата.
 
 ---
 
@@ -972,6 +1025,11 @@ Session может включать:
 * Practice;
 * Integration Exercise.
 
+Для Study Session дополнительно хранит выбранный `study.mode`, фактически
+использованные `study.resources[]` и необязательный компактный
+`study.discussion_summary`. Resource-кандидаты и полный Study transcript в
+Session не сохраняются.
+
 ---
 
 # 34. Session State
@@ -1076,6 +1134,23 @@ checkpoint:
     study_focus_shown: true
     study_completed: false
 
+  study_mode: hybrid
+
+  resources:
+    - type: external
+      format: documentation
+      title: Quorum documentation
+      url: https://example.com/quorum
+      language: en
+      status: completed
+
+    - type: generated
+      format: article
+      id: resource-quorum-20260919-001
+      path: resources/generated/resource-quorum-20260919-001.md
+      title: Quorum reads and writes
+      status: selected
+
   note: >
     Stopped after section about write quorum.
 ```
@@ -1084,6 +1159,12 @@ Checkpoint обновляется после выбора Resource, показа
 Study, каждого содержательного ответа в Recall/Practice, завершения этих
 этапов и любого изменения action/stage. Он хранит только минимальное состояние
 возобновления, а не transcript.
+
+Checkpoint сохраняет Study Mode, порядок Resources, completion state каждого
+из них и компактный DiscussionSummary. Resume пропускает завершённые Resources
+и всегда переиспользует уже созданный generated Resource по сохранённым ID/path;
+автоматическая повторная генерация запрещена. Это поддерживает оба hybrid
+порядка и паузу между двумя материалами.
 
 Pause не создаёт Evidence и не влияет на mastery. Budget является ориентиром
 для planner и сам по себе не закрывает segment и не ставит Session на паузу.
@@ -1436,7 +1517,7 @@ default config/
 
 ```yaml
 learning_core:
-  version: 0.3.0
+  version: 0.6.0
 ```
 
 Обновление существующих репозиториев на новую версию Core не входит в MVP.
@@ -1499,6 +1580,10 @@ Web UI не входит в MVP.
 31. Семантические решения выполняет Codex.
 32. Partial failure не должен приводить к потере Primary Data.
 33. Репозиторий должен быть полностью пригоден для работы без Web UI.
+34. Study Mode относится к попытке, а не к Unit.
+35. Generated Resource является неизменяемым Primary Data.
+36. Discussion не является Evidence или Assessment.
+37. Исторические одиночные `resource` остаются валидными без миграции.
 
 ---
 
