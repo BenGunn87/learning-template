@@ -4,9 +4,10 @@ import shutil
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -269,6 +270,82 @@ Quorums coordinate which replicas participate in reads and writes. Their overlap
         self.assertEqual("documentation", stored_session["study"]["resources"][0]["format"])
         self.assertNotIn("resource", stored_evidence)
         self.assertEqual([], self.repository.validate_repository())
+
+    def test_create_session_with_one_study_action_is_valid(self) -> None:
+        _, session = self.repository.create_session(
+            None,
+            25,
+            "2026-09-20T10:00:00+05:00",
+            [{"type": "study", "unit": "quorum-reads-writes"}],
+        )
+        self.assertEqual([], self.repository.validate_session(session))
+
+    def test_create_session_with_multiple_allowed_non_study_actions_remains_valid(self) -> None:
+        progress = {
+            "quorum-reads-writes": {"status": "practice"},
+            "unit-2": {"status": "practice"},
+        }
+        with patch.object(self.repository, "read_progress", return_value=progress):
+            _, session = self.repository.create_session(
+                None,
+                25,
+                "2026-09-20T10:00:00+05:00",
+                [
+                    {"type": "practice", "unit": "quorum-reads-writes"},
+                    {"type": "practice", "unit": "unit-2"},
+                ],
+            )
+        self.assertEqual([], self.repository.validate_session(session))
+
+    def test_create_session_with_two_study_actions_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "supports only one Study attempt per Session"):
+            self.repository.create_session(
+                None,
+                25,
+                "2026-09-20T10:00:00+05:00",
+                [
+                    {"type": "study", "unit": "quorum-reads-writes"},
+                    {"type": "study", "unit": "unit-2"},
+                ],
+            )
+        self.assertEqual([], list((self.root / "sessions").glob("*.yaml")))
+
+        errors = StringIO()
+        with redirect_stderr(errors):
+            result = learning_main(
+                [
+                    "--root",
+                    str(self.root),
+                    "create-session",
+                    "--minutes",
+                    "25",
+                    "--started-at",
+                    "2026-09-20T10:00:00+05:00",
+                    "--action",
+                    "study:quorum-reads-writes",
+                    "--action",
+                    "study:unit-2",
+                ]
+            )
+        self.assertEqual(1, result)
+        self.assertIn("supports only one Study attempt per Session", errors.getvalue())
+        self.assertEqual([], list((self.root / "sessions").glob("*.yaml")))
+
+    def test_validation_rejects_manual_session_file_with_two_study_actions(self) -> None:
+        path, session = self.repository.create_session(
+            None,
+            25,
+            "2026-09-20T10:00:00+05:00",
+            [{"type": "study", "unit": "quorum-reads-writes"}],
+        )
+        session["plan"]["actions"].append({"type": "study", "unit": "unit-2"})
+        session["actual"]["actions"].append({"type": "study", "unit": "unit-2", "status": "planned"})
+        write_yaml(path, session)
+        issues = self.repository.validate_session(session["id"])
+        self.assertTrue(
+            any("supports only one Study attempt per Session" in issue.message for issue in issues),
+            [issue.render() for issue in issues],
+        )
 
     def test_generated_mode_persists_primary_document_and_reuses_it_after_resume(self) -> None:
         _, session = self.repository.create_session("quorum-reads-writes", 25, "2026-09-20T10:00:00+05:00")

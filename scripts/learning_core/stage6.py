@@ -200,6 +200,26 @@ class Stage6RepositoryMixin(Stage5RepositoryMixin):
         relative = relative or f"sessions/{session.get('id', '<unknown>')}.yaml"
         session_id = session.get("id")
 
+        plan_actions = session.get("plan", {}).get("actions", [])
+        actual_actions = session.get("actual", {}).get("actions", [])
+        plan_studies = sum(
+            isinstance(action, dict) and action.get("type") == "study"
+            for action in plan_actions
+        ) if isinstance(plan_actions, list) else 0
+        actual_studies = sum(
+            isinstance(action, dict) and action.get("type") == "study"
+            for action in actual_actions
+        ) if isinstance(actual_actions, list) else 0
+        if max(plan_studies, actual_studies) > 1:
+            path = "$.plan.actions" if plan_studies > 1 else "$.actual.actions"
+            issues.append(
+                Issue(
+                    relative,
+                    "the current Session model supports only one Study attempt per Session",
+                    path,
+                )
+            )
+
         study = session.get("study")
         if isinstance(study, dict):
             used = study.get("resources")
