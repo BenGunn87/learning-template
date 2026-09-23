@@ -1,8 +1,8 @@
 format_version: 1
 id: 2026-09-18-003
 started_at: '2026-09-18T16:29:13+05:00'
-time_budget_minutes: 20
-status: paused
+time_budget_minutes: 25
+status: completed
 plan:
   unit: choose-storage-and-indexes
   actions:
@@ -13,37 +13,122 @@ actual:
   actions:
   - type: study
     unit: choose-storage-and-indexes
-    status: in_progress
+    status: completed
 segments:
 - started_at: '2026-09-18T16:29:13+05:00'
   ended_at: '2026-09-18T16:40:38+05:00'
   budget_minutes: 20
   end_reason: paused
+- started_at: '2026-09-20T18:20:01+05:00'
+  ended_at: '2026-09-20T18:31:10+05:00'
+  budget_minutes: 25
+  end_reason: recovered
+- started_at: '2026-09-23T15:24:48+05:00'
+  ended_at: '2026-09-23T16:37:00+05:00'
+  budget_minutes: 25
+  end_reason: completed
 checkpoint:
   unit: choose-storage-and-indexes
   action: study
-  stage: study
+  stage: takeaways
   completed_steps:
+    mode_selected: true
     resource_selected: true
+    resources_prepared: true
     study_focus_shown: true
-    study_completed: false
-    recall_completed: false
-    practice_completed: false
-    takeaways_completed: false
-  resource:
+    study_completed: true
+    recall_completed: true
+    practice_completed: true
+    takeaways_completed: true
+  study_mode: hybrid
+  resources:
+  - type: external
     title: Databases and Storage
     url: https://pratikdhanave.com/blog/posts/system-design-04-databases-and-storage.html
-    type: article
+    format: article
     language: en
     estimated_minutes: 14
     difficulty: intermediate
+    status: completed
+  - type: generated
+    id: resource-choose-storage-indexes-20260920-001
+    path: resources/generated/resource-choose-storage-indexes-20260920-001.md
+    title: От паттернов доступа к хранилищу и индексам
+    format: article
+    language: ru
+    estimated_minutes: 9
+    difficulty: intermediate
+    status: completed
   interaction:
-    prompt: 'Во время чтения ответьте себе: какие паттерны доступа и инварианты ограничивают
-      выбор хранилища; как из фильтрации, диапазона и сортировки вывести порядок полей
-      составного индекса; какой ценой для записи, памяти и эксплуатации покупается
-      ускорение чтения.'
-  note: Пауза во время чтения. Материал выбран и Study Focus показан; продолжить с
-    чтения статьи, затем перейти к Active Recall.
-  updated_at: '2026-09-18T16:40:38+05:00'
-evidence: []
-completed_at: null
+    prompt: 1. Какие ограничения определяют выбор хранилища? 2. Как левый префикс
+      определяет использование составного индекса? 3. Какова цена дополнительного
+      индекса?
+    scenario: 'Спроектировать PostgreSQL-хранение складских остатков: чтение по складу
+      и SKU, атомарная резервация нескольких SKU, выборка дефицитных товаров, история
+      изменений; определить ключи, индексы, конкурентную защиту, отвергнутую альтернативу,
+      цену индексов и измеримый сигнал пересмотра.'
+    answers:
+    - stage: recall
+      prompt: Какие ограничения определяют выбор хранилища?
+      answer: Операции чтения и записи, атомарно изменяемые данные, форма схемы, масштаб
+        и необходимость распределения, экспертиза и технические возможности команды.
+    - stage: recall
+      prompt: Как используется составной индекс с tenant_id, status и created_at?
+      answer: Индекс полезен по левому префиксу. Без tenant_id он существенно хуже;
+        без status сузит выборку по tenant_id, но переберёт записи tenant для created_at.
+    - stage: recall
+      prompt: Какова цена дополнительного индекса?
+      answer: Замедление записей, дополнительное место и память, усложнение планирования;
+        редко используемый индекс со слабым ускорением можно удалить.
+    - stage: practice
+      prompt: Предложите решение для сервиса складских остатков.
+      answer: PostgreSQL; отдельные таблицы текущих остатков и истории. Primary key
+        (warehouse_id, sku), индекс (warehouse_id, available_qty ASC), для истории
+        (warehouse_id, sku, date DESC). В транзакции уменьшать остатки, писать историю
+        и резервирование. Wide-column отвергнута из-за достаточности PostgreSQL и
+        отсутствия опыта. P99 записи выше SLO — сигнал пересмотра.
+    - stage: practice
+      prompt: Уточните optimistic locking для нескольких SKU.
+      answer: Обновлять записи только если текущее количество совпадает с прочитанным
+        перед операцией. Если хотя бы одно значение не совпало, откатить все изменения
+        и повторить операцию с начала.
+    takeaways:
+    - Если нет явных ограничений, то сначала лучше использовать реляционную БД, и
+      только при возникновении проблем начинать делать денормализацию, переходить
+      к NoSQL-решениям и так далее.
+    - 'Индексы не только ускоряют чтение, но и имеют накладные расходы: замедляют
+      запись, потребляют память и место в кэше. Перед добавлением индекса надо понимать,
+      что конкретно мы ускоряем.'
+    - В составном индексе надо помнить, что поля рассматриваются слева направо.
+    - При переходе к шардированию надо внимательно выбирать ключ шардирования, чтобы
+      минимизировать операции между шардами.
+  note: Полная независимая проверка и пользовательские Takeaways завершены. Checkpoint
+    готов к созданию immutable Evidence и отдельной Assessment.
+  updated_at: '2026-09-23T16:37:00+05:00'
+evidence:
+- 2026-09-18-003-initial-001
+completed_at: '2026-09-23T16:37:00+05:00'
+last_recovery:
+  recovered_at: '2026-09-23T15:24:48+05:00'
+  segment_closed_at: '2026-09-20T18:31:10+05:00'
+  source: checkpoint
+study:
+  mode: hybrid
+  resources:
+  - type: external
+    title: Databases and Storage
+    url: https://pratikdhanave.com/blog/posts/system-design-04-databases-and-storage.html
+    format: article
+    language: en
+    estimated_minutes: 14
+    difficulty: intermediate
+    status: completed
+  - type: generated
+    id: resource-choose-storage-indexes-20260920-001
+    path: resources/generated/resource-choose-storage-indexes-20260920-001.md
+    title: От паттернов доступа к хранилищу и индексам
+    format: article
+    language: ru
+    estimated_minutes: 9
+    difficulty: intermediate
+    status: completed
