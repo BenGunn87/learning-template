@@ -49,6 +49,61 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
                     interests.add(reason["interest"])
         return gaps, interests
 
+    def _assessment_node_boundary_issues(
+        self,
+        assessment: dict[str, Any],
+        relative: str,
+    ) -> list[Issue]:
+        """Require every formally evaluated node to belong to the source Unit."""
+        evaluated = assessment.get("evaluated")
+        if not isinstance(evaluated, dict):
+            return []
+
+        assessment_id = assessment.get("id", "<unknown>")
+        evidence_id = assessment.get("evidence")
+        evidence_matches = self._find_by_id("evidence", evidence_id) if isinstance(evidence_id, str) else []
+        if len(evidence_matches) != 1 or not isinstance(evidence_matches[0][1], dict):
+            return []
+
+        unit_id = evidence_matches[0][1].get("unit")
+        unit_matches = self._find_by_id("units", unit_id) if isinstance(unit_id, str) else []
+        if len(unit_matches) != 1 or not isinstance(unit_matches[0][1], dict):
+            return [
+                Issue(
+                    relative,
+                    f"Assessment {assessment_id} cannot resolve source Unit {unit_id} "
+                    "for the unit.nodes boundary",
+                    "$.evidence",
+                )
+            ]
+
+        allowed_nodes = unit_matches[0][1].get("nodes")
+        if not isinstance(allowed_nodes, list):
+            return [
+                Issue(
+                    relative,
+                    f"Assessment {assessment_id} source Unit {unit_id} has no valid unit.nodes boundary",
+                    "$.evidence",
+                )
+            ]
+        allowed = {node_id for node_id in allowed_nodes if isinstance(node_id, str)}
+        allowed_text = f"[{', '.join(str(node_id) for node_id in allowed_nodes)}]"
+        issues: list[Issue] = []
+        for dimension, evaluation in evaluated.items():
+            if not isinstance(evaluation, dict):
+                continue
+            for index, node_id in enumerate(evaluation.get("nodes", [])):
+                if isinstance(node_id, str) and node_id not in allowed:
+                    issues.append(
+                        Issue(
+                            relative,
+                            f"Assessment {assessment_id} for Unit {unit_id} formally evaluates "
+                            f"out-of-scope Node {node_id}; allowed unit.nodes: {allowed_text}",
+                            f"$.evaluated.{dimension}.nodes[{index}]",
+                        )
+                    )
+        return issues
+
     def validate_assessment(self, assessment: Any, relative: str | None = None) -> list[Issue]:
         issues = super().validate_assessment(assessment, relative)
         if isinstance(assessment, str):
@@ -80,6 +135,7 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
                                 f"$.evaluated.{dimension}.nodes[{index}]",
                             )
                         )
+        issues.extend(self._assessment_node_boundary_issues(assessment, relative))
         return issues
 
     def validate_gap(self, gap: Any, relative: str | None = None) -> list[Issue]:
@@ -124,6 +180,8 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
                 issues.append(Issue(relative, f"signal references unknown Assessment: {assessment_id}", f"$.signals[{index}].assessment"))
             else:
                 assessment = assessment_matches[0][1]
+                assessment_path = self._relative(assessment_matches[0][0])
+                issues.extend(self._assessment_node_boundary_issues(assessment, assessment_path))
                 if assessment.get("evidence") != evidence_id:
                     issues.append(Issue(relative, "signal Assessment belongs to another Evidence", f"$.signals[{index}]"))
                 evaluated = assessment.get("evaluated")
@@ -411,9 +469,10 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         assessments, issues = self._read_files("assessments")
         self._raise_issues(issues)
         signals: list[dict[str, Any]] = []
-        for _, assessment in assessments:
+        for path, assessment in assessments:
             if not isinstance(assessment, dict) or (evidence_id is not None and assessment.get("evidence") != evidence_id):
                 continue
+            self._raise_issues(self._assessment_node_boundary_issues(assessment, self._relative(path)))
             matches = self._find_by_id("evidence", assessment.get("evidence"))
             if len(matches) != 1:
                 continue
@@ -517,6 +576,12 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         node_id: str,
         dimension: str,
     ) -> tuple[Path | None, str]:
+        self._raise_issues(
+            self._assessment_node_boundary_issues(
+                assessment,
+                f"assessments/{assessment.get('evidence', '<unknown>')}/001.yaml",
+            )
+        )
         result = assessment["result"][dimension]
         existing = self._gap_for_key(node_id, dimension)
         timestamp = assessment["created_at"]
@@ -590,6 +655,12 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
             raise ValueError(f"Evidence requires exactly one Assessment: {evidence_id}")
         evidence = evidence_matches[0][1]
         assessment = assessment_matches[0][1]
+        self._raise_issues(
+            self._assessment_node_boundary_issues(
+                assessment,
+                self._relative(assessment_matches[0][0]),
+            )
+        )
         evaluated = assessment.get("evaluated")
         if not isinstance(evaluated, dict):
             return []
@@ -620,6 +691,16 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
                         }
                     )
         return changes
+
+    def rebuild_progress(self) -> dict[str, Any]:
+        boundary_issues: list[Issue] = []
+        for path, assessment in self._read_files("assessments")[0]:
+            if isinstance(assessment, dict):
+                boundary_issues.extend(
+                    self._assessment_node_boundary_issues(assessment, self._relative(path))
+                )
+        self._raise_issues(boundary_issues)
+        return super().rebuild_progress()
 
     def create_assessment(self, data: Any) -> Path:
         if isinstance(data, dict) and self._stage5_assessment_required() and not isinstance(data.get("evaluated"), dict):

@@ -226,6 +226,49 @@ class Stage5Test(unittest.TestCase):
         self.repository.complete_session(session["id"], [evidence_id], f"{day}T10:25:00+05:00")
         return evidence_id
 
+    def draft_initial_assessment(
+        self,
+        evaluated: dict[str, dict[str, list[str]]],
+        *,
+        observed_nodes: list[str] | None = None,
+    ) -> tuple[str, dict]:
+        _, session = self.repository.create_session("practice-quorum", 25, "2026-09-14T10:00:00+05:00")
+        evidence_id = f"{session['id']}-initial-001"
+        self.repository.create_evidence(
+            {
+                "format_version": 1,
+                "id": evidence_id,
+                "unit": "practice-quorum",
+                "session": session["id"],
+                "type": "initial",
+                "created_at": "2026-09-14T10:20:00+05:00",
+                "resource": {
+                    "title": "Quorum notes",
+                    "url": "https://example.com/quorum",
+                    "type": "article",
+                    "language": "en",
+                },
+                "recall": {"prompts": ["What is a quorum?"], "answers": ["A voting subset."]},
+                "practice": {"prompt": "Choose R and W for N=3.", "answer": "I am not sure."},
+                "takeaways": ["Quorum choices depend on failure and consistency goals."],
+                "observations": [],
+            }
+        )
+        assessment = {
+            "format_version": 1,
+            "id": f"{evidence_id}-assessment-001",
+            "evidence": evidence_id,
+            "type": "initial",
+            "created_at": "2026-09-14T10:22:00+05:00",
+            "result": {"recall": "good", "understanding": "good", "application": "hard"},
+            "gaps": ["Application needs improvement."],
+            "summary": "Assessment of quorum application.",
+            "evaluated": evaluated,
+        }
+        if observed_nodes is not None:
+            assessment["observed_nodes"] = observed_nodes
+        return evidence_id, assessment
+
     @staticmethod
     def gap_by_key(gaps: list[dict], node: str, dimension: str) -> dict:
         return next(gap for gap in gaps if gap["node"] == node and gap["dimension"] == dimension)
@@ -315,16 +358,77 @@ class Stage5Test(unittest.TestCase):
             result={"recall": "hard", "understanding": "good", "application": "hard"},
             evaluated={
                 "recall": {"nodes": ["quorum"]},
-                "application": {"nodes": ["consensus"]},
+                "application": {"nodes": ["replication"]},
             },
         )
         keys = {(gap["node"], gap["dimension"]) for gap in self.repository.list_gaps()}
-        self.assertEqual({("quorum", "recall"), ("consensus", "application")}, keys)
+        self.assertEqual({("quorum", "recall"), ("replication", "application")}, keys)
         signals = self.repository.detect_weak_signals()
         self.assertEqual(
-            {("quorum", "recall"), ("consensus", "application")},
+            {("quorum", "recall"), ("replication", "application")},
             {(signal["node"], signal["dimension"]) for signal in signals},
         )
+
+    def test_assessment_accepts_one_or_multiple_declared_unit_nodes(self) -> None:
+        evidence_id, assessment = self.draft_initial_assessment({"application": {"nodes": ["quorum"]}})
+        relative = f"assessments/{evidence_id}/001.yaml"
+        self.assertEqual([], self.repository.validate_assessment(assessment, relative))
+
+        assessment["evaluated"] = {"application": {"nodes": ["replication", "quorum"]}}
+        self.assertEqual([], self.repository.validate_assessment(assessment, relative))
+        self.repository.create_assessment(assessment)
+        progress = self.repository.rebuild_progress()
+
+        self.assertEqual({"replication", "quorum"}, {gap["node"] for gap in self.repository.list_gaps()})
+        self.assertEqual(assessment["id"], progress["practice-quorum"]["latest_assessment"])
+
+    def test_out_of_scope_assessment_is_rejected_with_context(self) -> None:
+        evidence_id, assessment = self.draft_initial_assessment(
+            {"application": {"nodes": ["consensus"]}}
+        )
+        issues = self.repository.validate_assessment(assessment)
+        rendered = "\n".join(issue.render() for issue in issues)
+
+        self.assertIn(assessment["id"], rendered)
+        self.assertIn("Unit practice-quorum", rendered)
+        self.assertIn("Node consensus", rendered)
+        self.assertIn("allowed unit.nodes: [replication, quorum]", rendered)
+        with self.assertRaisesRegex(ValueError, "out-of-scope Node consensus"):
+            self.repository.create_assessment(assessment)
+
+        self.assertFalse((self.root / f"assessments/{evidence_id}/001.yaml").exists())
+        self.assertEqual({}, self.repository.read_progress())
+        self.assertEqual([], self.repository.list_gaps())
+
+    def test_mixed_scope_assessment_is_rejected_atomically_at_runtime(self) -> None:
+        evidence_id, assessment = self.draft_initial_assessment(
+            {"application": {"nodes": ["quorum", "consensus"]}}
+        )
+        assessment_path = self.root / f"assessments/{evidence_id}/001.yaml"
+        write_yaml(assessment_path, assessment)
+
+        with self.assertRaisesRegex(ValueError, "out-of-scope Node consensus"):
+            self.repository.update_gaps_for_evidence(evidence_id)
+        self.assertEqual([], self.repository.list_gaps())
+
+        with self.assertRaisesRegex(ValueError, "out-of-scope Node consensus"):
+            self.repository.rebuild_progress()
+        self.assertEqual({}, self.repository.read_progress())
+        self.assertTrue(
+            any("out-of-scope Node consensus" in issue.message for issue in self.repository.validate_repository())
+        )
+
+    def test_out_of_scope_observation_remains_non_formal(self) -> None:
+        evidence_id, assessment = self.draft_initial_assessment(
+            {"application": {"nodes": ["quorum"]}},
+            observed_nodes=["consensus"],
+        )
+        self.repository.create_assessment(assessment)
+
+        stored = yaml.safe_load((self.root / f"assessments/{evidence_id}/001.yaml").read_text())
+        self.assertEqual(["consensus"], stored["observed_nodes"])
+        self.assertEqual({"quorum"}, {gap["node"] for gap in self.repository.list_gaps()})
+        self.assertFalse(any(gap["node"] == "consensus" for gap in self.repository.list_gaps()))
 
     def test_detected_gap_resolves_then_reopens_with_same_id(self) -> None:
         first = self.attempt(
