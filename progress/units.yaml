@@ -1,3 +1,13 @@
+choose-storage-and-indexes:
+  status: practice
+  attempts: 1
+  mastery:
+    recall: hard
+    understanding: good
+    application: hard
+  latest_evidence: 2026-09-18-003-initial-001
+  latest_assessment: 2026-09-18-003-initial-001-assessment-001
+  last_attempt: '2026-09-23T16:35:00+05:00'
 estimate-workload-and-capacity:
   status: verified
   attempts: 2

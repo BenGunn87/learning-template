@@ -3,11 +3,31 @@ format_version: 1
 focus:
   primary: storage-selection
   secondary:
-    - architecture-decomposition
+    - transactions
     - sql-and-nosql
     - replication
 
 units:
+  - id: choose-storage-and-indexes
+    title: Choose storage and indexes
+    nodes:
+      - storage-selection
+      - indexing
+    goal: >
+      Закрепить выбор хранилища и индексов в новом backend-сценарии,
+      самостоятельно вывести конкурентную защиту, цену записи и измеримые
+      сигналы пересмотра решения.
+    estimated_minutes: 25
+    priority: high
+    routing_reasons:
+      - type: gap
+        gap: gap-transactions-application-001
+      - type: gap
+        gap: gap-indexing-application-001
+      - type: gap
+        gap: gap-storage-selection-recall-001
+      - type: primary-route
+
   - id: decompose-a-backend-system
     title: Decompose a backend system
     nodes:
@@ -17,20 +37,6 @@ units:
     goal: >
       Разложить backend-систему на компоненты, потоки данных и границы
       ответственности, связав декомпозицию с требованиями и компромиссами.
-    estimated_minutes: 25
-    priority: high
-    routing_reasons:
-      - type: primary-route
-      - type: context
-
-  - id: choose-storage-and-indexes
-    title: Choose storage and indexes
-    nodes:
-      - storage-selection
-      - indexing
-    goal: >
-      Сравнить подходящие хранилища и индексы по паттернам доступа,
-      гарантиям, стоимости записи, масштабу и эксплуатационным рискам.
     estimated_minutes: 25
     priority: high
     routing_reasons:
@@ -49,8 +55,6 @@ units:
       компромиссы выбора.
     estimated_minutes: 25
     priority: medium
-    blocked_by:
-      - choose-storage-and-indexes
     routing_reasons:
       - type: interest
         interest: interest-nosql-database-models
@@ -67,8 +71,6 @@ units:
       альтернативными моделями хранения.
     estimated_minutes: 25
     priority: medium
-    blocked_by:
-      - choose-storage-and-indexes
     routing_reasons:
       - type: interest
         interest: interest-nosql-database-models
