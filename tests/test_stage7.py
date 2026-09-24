@@ -28,6 +28,16 @@ class Stage7Test(unittest.TestCase):
     def gap_by_key(gaps: list[dict], node: str, dimension: str) -> dict:
         return test_stage5.Stage5Test.gap_by_key(gaps, node, dimension)
 
+    def frontier_units_routed_by_gap(self, gap_id: str) -> list[str]:
+        return sorted(
+            unit["id"]
+            for unit in self.repository.read("frontier")["units"]
+            if any(
+                reason.get("type") == "gap" and reason.get("gap") == gap_id
+                for reason in unit.get("routing_reasons", [])
+            )
+        )
+
     def reevaluation(
         self,
         evidence_id: str,
@@ -156,6 +166,57 @@ class Stage7Test(unittest.TestCase):
         self.assertFalse(any(reason.get("gap") == gap_id for reason in reasons))
         candidates = self.repository.session_candidates(25)["candidates"]
         self.assertFalse(any(gap_id in item["related_gaps"] for item in candidates))
+
+    def test_invalidated_gap_routing_is_restored_when_gap_becomes_detected_again(self) -> None:
+        evidence_id = self.attempt("initial", "2026-09-14", "hard")
+        gap_id = self.repository.list_gaps()[0]["id"]
+        self.repository.rebuild_frontier()
+        initially_routed = self.frontier_units_routed_by_gap(gap_id)
+        self.assertEqual(["practice-quorum"], initially_routed)
+
+        self.repository.reevaluate_assessment(self.reevaluation(evidence_id, "good"))
+        self.assertEqual("invalidated", self.repository.list_gaps()[0]["status"])
+        self.assertEqual([], self.frontier_units_routed_by_gap(gap_id))
+
+        self.repository.reevaluate_assessment(self.reevaluation(evidence_id, "hard", 3))
+        self.assertEqual("detected", self.repository.list_gaps()[0]["status"])
+        self.assertEqual(initially_routed, self.frontier_units_routed_by_gap(gap_id))
+        self.assertEqual([], self.repository.validate_repository())
+
+        before_rebuild = deepcopy(self.repository.read("frontier"))
+        self.repository.rebuild_frontier()
+        self.assertEqual(before_rebuild, self.repository.read("frontier"))
+        self.assertEqual([], self.repository.validate_repository())
+
+    def test_confirmed_gap_routing_is_restored_after_all_signals_reactivate(self) -> None:
+        first = self.attempt("initial", "2026-09-14", "hard")
+        second = self.attempt("practice", "2026-09-15", "hard", first)
+        gap_id = self.repository.list_gaps()[0]["id"]
+        self.repository.rebuild_frontier()
+        self.assertEqual("confirmed", self.repository.list_gaps()[0]["status"])
+        self.assertEqual(["practice-quorum"], self.frontier_units_routed_by_gap(gap_id))
+
+        self.repository.reevaluate_assessment(self.reevaluation(first, "good"))
+        self.repository.reevaluate_assessment(self.reevaluation(second, "good"))
+        self.assertEqual("invalidated", self.repository.list_gaps()[0]["status"])
+        self.assertEqual([], self.frontier_units_routed_by_gap(gap_id))
+
+        self.repository.reevaluate_assessment(self.reevaluation(first, "hard", 3))
+        self.repository.reevaluate_assessment(self.reevaluation(second, "hard", 3))
+        self.assertEqual("confirmed", self.repository.list_gaps()[0]["status"])
+        self.assertEqual(["practice-quorum"], self.frontier_units_routed_by_gap(gap_id))
+
+    def test_resolved_gap_routing_is_restored_when_gap_reopens(self) -> None:
+        first = self.attempt("initial", "2026-09-14", "hard")
+        second = self.attempt("practice", "2026-09-15", "good", first)
+        gap_id = self.repository.list_gaps()[0]["id"]
+        self.repository.rebuild_frontier()
+        self.assertEqual("resolved", self.repository.list_gaps()[0]["status"])
+        self.assertEqual([], self.frontier_units_routed_by_gap(gap_id))
+
+        self.repository.reevaluate_assessment(self.reevaluation(second, "hard"))
+        self.assertEqual("confirmed", self.repository.list_gaps()[0]["status"])
+        self.assertEqual(["practice-quorum"], self.frontier_units_routed_by_gap(gap_id))
 
     def test_invalid_mixed_boundary_is_atomic(self) -> None:
         evidence_id = self.attempt("initial", "2026-09-14", "hard")

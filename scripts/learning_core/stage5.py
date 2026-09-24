@@ -761,6 +761,46 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
             activated.append(interest["id"])
         return {"updated_gaps": updated_gaps, "activated_interests": activated}
 
+    @staticmethod
+    def _project_frontier_document(
+        frontier: dict[str, Any],
+        gaps: dict[Path, dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Rebuild Gap routing reasons from the current active Gap state."""
+        result = deepcopy(frontier)
+        active_gaps_by_node: dict[str, list[str]] = {}
+        for gap in gaps.values():
+            gap_id = gap.get("id")
+            node_id = gap.get("node")
+            if (
+                gap.get("status") in {"detected", "confirmed"}
+                and isinstance(gap_id, str)
+                and isinstance(node_id, str)
+            ):
+                active_gaps_by_node.setdefault(node_id, []).append(gap_id)
+
+        for gap_ids in active_gaps_by_node.values():
+            gap_ids.sort()
+
+        for unit in result.get("units", []):
+            if not isinstance(unit, dict):
+                continue
+            reasons = [
+                deepcopy(reason)
+                for reason in unit.get("routing_reasons", [])
+                if not (isinstance(reason, dict) and reason.get("type") == "gap")
+            ]
+            related_gap_ids = sorted(
+                {
+                    gap_id
+                    for node_id in unit.get("nodes", [])
+                    for gap_id in active_gaps_by_node.get(node_id, [])
+                }
+            )
+            reasons.extend({"type": "gap", "gap": gap_id} for gap_id in related_gap_ids)
+            unit["routing_reasons"] = reasons or [{"type": "primary-route"}]
+        return result
+
     def inspect_related_nodes(self, node_id: str) -> dict[str, Any]:
         graph = self.read("graph")
         nodes = {node["id"]: node for node in graph.get("nodes", []) if isinstance(node, dict)}
@@ -788,7 +828,7 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         gap_by_id = {
             gap["id"]: gap
             for gap in self.list_gaps()
-            if gap.get("status") != "invalidated"
+            if gap.get("status") in {"detected", "confirmed"}
         }
         interest_by_id = {interest["id"]: interest for interest in self.list_interests()}
         frontier = self.read("frontier")

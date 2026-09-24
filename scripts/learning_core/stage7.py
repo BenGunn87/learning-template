@@ -616,28 +616,6 @@ class Stage7RepositoryMixin(Stage6RepositoryMixin):
                     issues.append(Issue(relative, f"invalid Gap transition: {previous} -> {current}", f"$.history[{index}].status"))
         return issues
 
-    @staticmethod
-    def _project_frontier_document(
-        frontier: dict[str, Any],
-        gaps: dict[Path, dict[str, Any]],
-    ) -> dict[str, Any]:
-        result = deepcopy(frontier)
-        invalidated = {gap["id"] for gap in gaps.values() if gap.get("status") == "invalidated"}
-        for unit in result.get("units", []):
-            if not isinstance(unit, dict):
-                continue
-            reasons = [
-                reason
-                for reason in unit.get("routing_reasons", [])
-                if not (
-                    isinstance(reason, dict)
-                    and reason.get("type") == "gap"
-                    and reason.get("gap") in invalidated
-                )
-            ]
-            unit["routing_reasons"] = reasons or [{"type": "primary-route"}]
-        return result
-
     def rebuild_frontier(self) -> dict[str, Any]:
         current = self.read("frontier")
         if not isinstance(current, dict):
@@ -692,7 +670,8 @@ class Stage7RepositoryMixin(Stage6RepositoryMixin):
         gaps, gap_changes = self._project_gaps(records, data)
         self._raise_issues(self._projected_gap_issues(gaps, records))
         frontier = self._project_frontier_document(self.read("frontier"), gaps)
-        self._raise_issues(self.validate_frontier(frontier, self.read("graph")))
+        gaps_by_id = {gap["id"]: gap for gap in gaps.values()}
+        self._raise_issues(self.validate_frontier(frontier, self.read("graph"), gaps_by_id))
 
         progress_path = self.path("progress/units.yaml")
         writes: list[tuple[Path, dict[str, Any], bool, Any]] = [

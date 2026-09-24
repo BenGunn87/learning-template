@@ -159,7 +159,7 @@ def parser() -> argparse.ArgumentParser:
     routing = subcommands.add_parser("update-routing-metadata", help="refresh Gap impact and activate serviced Interests")
     routing.add_argument("--at", help="RFC 3339 update timestamp")
     subcommands.add_parser("update-progress", help="rebuild derived Progress from Evidence and Assessments")
-    subcommands.add_parser("rebuild-frontier", help="remove invalidated Gap influence from Frontier routing")
+    subcommands.add_parser("rebuild-frontier", help="rebuild Gap influence in Frontier routing from current state")
     complete_session = subcommands.add_parser("complete-session", help="complete an active Session after Progress update")
     complete_session.add_argument("session_id")
     complete_session.add_argument("--evidence", action="append", default=[], dest="evidence_ids")

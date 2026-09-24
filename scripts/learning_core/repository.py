@@ -166,7 +166,12 @@ class Repository(Stage7RepositoryMixin):
                     issues.append(Issue("map/graph.yaml", f"replacement references unknown node: {replacement}", f"$.nodes[{index}].replaced_by"))
         return issues
 
-    def validate_frontier(self, frontier: Any | None = None, graph: Any | None = None) -> list[Issue]:
+    def validate_frontier(
+        self,
+        frontier: Any | None = None,
+        graph: Any | None = None,
+        gaps_by_id: dict[str, dict[str, Any]] | None = None,
+    ) -> list[Issue]:
         if frontier is None:
             try:
                 frontier = self.read("frontier")
@@ -235,14 +240,18 @@ class Repository(Stage7RepositoryMixin):
                 if reason.get("type") == "gap":
                     gap_id = reason.get("gap")
                     if isinstance(gap_id, str):
-                        gap_matches = self._find_by_id("gaps", gap_id)
+                        gap_matches = (
+                            [(self.path(f"gaps/{gap_id}.yaml"), gaps_by_id[gap_id])]
+                            if gaps_by_id is not None and gap_id in gaps_by_id
+                            else [] if gaps_by_id is not None else self._find_by_id("gaps", gap_id)
+                        )
                         if not gap_matches:
                             issues.append(Issue("map/frontier.yaml", f"routing reason references unknown Gap: {gap_id}", f"$.units[{index}].routing_reasons[{reason_index}].gap"))
                         elif any(
-                            isinstance(gap, dict) and gap.get("status") == "invalidated"
+                            isinstance(gap, dict) and gap.get("status") not in {"detected", "confirmed"}
                             for _, gap in gap_matches
                         ):
-                            issues.append(Issue("map/frontier.yaml", f"routing reason references invalidated Gap: {gap_id}", f"$.units[{index}].routing_reasons[{reason_index}].gap"))
+                            issues.append(Issue("map/frontier.yaml", f"routing reason references inactive Gap: {gap_id}", f"$.units[{index}].routing_reasons[{reason_index}].gap"))
                 if reason.get("type") == "interest":
                     interest_id = reason.get("interest")
                     if isinstance(interest_id, str) and not self._find_by_id("interests", interest_id):
