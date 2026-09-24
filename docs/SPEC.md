@@ -186,7 +186,7 @@ topic:
   title: System Design
 
 learning_core:
-  version: 0.6.0
+  version: 0.7.0
 
 created_at: 2026-09-11
 ```
@@ -879,7 +879,7 @@ evidence: evidence-id
 
 type: reevaluation
 supersedes: assessment-001
-reason: user-disagreed
+reason: user_request
 
 result:
   recall: good
@@ -900,6 +900,49 @@ Progress rebuildable
 ```
 
 Active Assessment определяется детерминированно по цепочке supersedes.
+
+## Assessment Reevaluation
+
+Reevaluation является явным действием и никогда не запускается автоматически.
+Допустимые причины:
+
+```text
+user_request
+contradiction
+rubric_change
+```
+
+Codex может предложить пересмотр, но для записи нового event требуется явно
+выбранное действие reevaluation. Оно повторно интерпретирует только исходный
+Evidence. Более поздние ответы, другие Evidence, chat memory и Session summary
+могут быть причиной начать пересмотр, но не являются материалом для оценки.
+
+Цепочка `supersedes` всегда линейна:
+
+```text
+A → B → C
+```
+
+Self-reference, cycles, branching, cross-Evidence links и superseding уже
+superseded Assessment запрещены. Для каждого Evidence, у которого есть
+Assessment, существует ровно один active Assessment: единственный event, на
+который не ссылается `supersedes` следующего event. Исторические Assessments
+остаются на диске.
+
+Переоценка проходит тот же формальный `unit.nodes` boundary, что и исходная
+Assessment. Перед записью deterministic core полностью проверяет новый event и
+проектируемые изменения. Затем одной логической операцией:
+
+```text
+append Assessment
+→ rebuild Progress
+→ reconcile Gaps
+→ rebuild Frontier routing
+```
+
+При ошибке ни один из этих результатов не должен остаться частично применённым.
+Reevaluation не создаёт Evidence или Session и не увеличивает число attempts,
+Practice или Review.
 
 ---
 
@@ -930,6 +973,36 @@ quorum-reads-writes:
 ```
 
 Progress можно удалить и пересчитать.
+
+При rebuild для каждого Evidence участвует только его active Assessment.
+Superseded Assessments не влияют на текущее mastery, но сохраняются для аудита.
+
+## Gap provenance after reevaluation
+
+Gap signals являются исторической Primary Data и не удаляются. Signal считается
+active только когда его `assessment` является active Assessment для указанного
+Evidence. Сигналы superseded Assessments остаются provenance, но не участвуют в
+текущем Gap state.
+
+Gap поддерживает состояния:
+
+```text
+detected
+confirmed
+resolved
+invalidated
+```
+
+`resolved` означает, что реальная слабость была исправлена последующим
+обучением. `invalidated` означает, что слабость существовала только из-за
+интерпретации Assessment, которая затем была superseded. Эти состояния не
+взаимозаменяемы.
+
+Reconciliation по active signals может понизить `confirmed` до `detected`,
+перевести `detected`/`confirmed` в `invalidated` или переоткрыть `resolved` как
+`detected`/`confirmed`. Каждый reevaluation-driven переход записывается в
+`Gap.history` с новым Assessment и `reason: reevaluation`. Invalidated Gap не
+участвует в Frontier routing.
 
 ---
 
@@ -1530,7 +1603,7 @@ default config/
 
 ```yaml
 learning_core:
-  version: 0.6.0
+  version: 0.7.0
 ```
 
 Обновление существующих репозиториев на новую версию Core не входит в MVP.

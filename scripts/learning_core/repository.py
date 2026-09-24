@@ -10,11 +10,11 @@ from jsonschema.exceptions import SchemaError
 from jsonschema.validators import validator_for
 
 from .issues import Issue
-from .stage6 import Stage6RepositoryMixin
+from .stage7 import Stage7RepositoryMixin
 from .yaml_io import YamlFileError, dump_yaml, load_yaml
 
 
-class Repository(Stage6RepositoryMixin):
+class Repository(Stage7RepositoryMixin):
     DOCUMENTS = {
         "learning": Path("learning.yaml"),
         "context": Path("config/context.yaml"),
@@ -234,8 +234,15 @@ class Repository(Stage6RepositoryMixin):
                     continue
                 if reason.get("type") == "gap":
                     gap_id = reason.get("gap")
-                    if isinstance(gap_id, str) and not self._find_by_id("gaps", gap_id):
-                        issues.append(Issue("map/frontier.yaml", f"routing reason references unknown Gap: {gap_id}", f"$.units[{index}].routing_reasons[{reason_index}].gap"))
+                    if isinstance(gap_id, str):
+                        gap_matches = self._find_by_id("gaps", gap_id)
+                        if not gap_matches:
+                            issues.append(Issue("map/frontier.yaml", f"routing reason references unknown Gap: {gap_id}", f"$.units[{index}].routing_reasons[{reason_index}].gap"))
+                        elif any(
+                            isinstance(gap, dict) and gap.get("status") == "invalidated"
+                            for _, gap in gap_matches
+                        ):
+                            issues.append(Issue("map/frontier.yaml", f"routing reason references invalidated Gap: {gap_id}", f"$.units[{index}].routing_reasons[{reason_index}].gap"))
                 if reason.get("type") == "interest":
                     interest_id = reason.get("interest")
                     if isinstance(interest_id, str) and not self._find_by_id("interests", interest_id):
@@ -367,7 +374,7 @@ class Repository(Stage6RepositoryMixin):
                     "gaps": [
                         gap["id"]
                         for gap in gaps
-                        if gap.get("node") == node["id"] and gap.get("status") != "resolved"
+                        if gap.get("node") == node["id"] and gap.get("status") not in {"resolved", "invalidated"}
                     ],
                     "interests": [
                         interest["id"]

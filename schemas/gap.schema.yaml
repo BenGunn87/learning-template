@@ -30,7 +30,7 @@ properties:
   dimension:
     enum: [recall, understanding, application]
   status:
-    enum: [detected, confirmed, resolved]
+    enum: [detected, confirmed, resolved, invalidated]
   scope:
     enum: [local, cross-concept]
   routing_impact:
@@ -64,19 +64,26 @@ properties:
     items:
       type: object
       additionalProperties: false
-      required: [status, at, evidence]
+      required: [status, at]
+      anyOf:
+        - required: [evidence]
+        - required: [assessment]
       properties:
         status:
-          enum: [detected, confirmed, resolved]
+          enum: [detected, confirmed, resolved, invalidated]
         at:
           type: string
           format: date-time
         evidence:
           type: string
           pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+        assessment:
+          type: string
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+        reason:
+          enum: [reevaluation]
   resolved_at:
     oneOf:
       - type: 'null'
       - type: string
         format: date-time
-

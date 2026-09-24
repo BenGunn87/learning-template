@@ -13,7 +13,7 @@ from .yaml_io import YamlFileError, create_yaml, load_yaml, replace_yaml
 
 WEAK_GRADES = {"failed", "hard"}
 STRONG_GRADES = {"good", "easy"}
-GAP_STATUSES = {"detected", "confirmed", "resolved"}
+GAP_STATUSES = {"detected", "confirmed", "resolved", "invalidated"}
 INTEREST_TRANSITIONS = {
     "pending": {"active", "dismissed"},
     "active": {"satisfied", "dismissed"},
@@ -165,14 +165,12 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
             issues.append(Issue(relative, f"gap references unknown node: {node}", "$.node"))
 
         signals = gap.get("signals", [])
-        evidence_ids: list[str] = []
         for index, signal in enumerate(signals):
             if not isinstance(signal, dict):
                 continue
             evidence_id = signal.get("evidence")
             assessment_id = signal.get("assessment")
             if isinstance(evidence_id, str):
-                evidence_ids.append(evidence_id)
                 if len(self._find_by_id("evidence", evidence_id)) != 1:
                     issues.append(Issue(relative, f"signal references unknown Evidence: {evidence_id}", f"$.signals[{index}].evidence"))
             assessment_matches = self._find_by_id("assessments", assessment_id) if isinstance(assessment_id, str) else []
@@ -209,13 +207,21 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
                 if known_nodes and observed not in known_nodes:
                     issues.append(Issue(relative, f"signal references unknown node: {observed}", f"$.signals[{index}].observed_nodes[{node_index}]"))
 
-        if len(evidence_ids) != len(set(evidence_ids)):
-            issues.append(Issue(relative, "Gap signals must use independent Evidence", "$.signals"))
+        active_signals = self._active_gap_signals(gap)
+        active_evidence_ids = [
+            signal.get("evidence")
+            for signal in active_signals
+            if isinstance(signal, dict) and isinstance(signal.get("evidence"), str)
+        ]
+        if len(active_evidence_ids) != len(set(active_evidence_ids)):
+            issues.append(Issue(relative, "active Gap signals must use independent Evidence", "$.signals"))
         status = gap.get("status")
-        if status == "detected" and len(set(evidence_ids)) != 1:
+        if status == "detected" and len(set(active_evidence_ids)) != 1:
             issues.append(Issue(relative, "status=detected requires exactly one independent weak signal", "$.signals"))
-        if status == "confirmed" and len(set(evidence_ids)) < 2:
+        if status == "confirmed" and len(set(active_evidence_ids)) < 2:
             issues.append(Issue(relative, "status=confirmed requires two independent weak signals", "$.signals"))
+        if status == "invalidated" and active_evidence_ids:
+            issues.append(Issue(relative, "status=invalidated requires no active weak signals", "$.signals"))
         if gap.get("routing_impact") == "blocking" and status != "confirmed":
             issues.append(Issue(relative, "only a confirmed Gap may be blocking", "$.routing_impact"))
         if isinstance(node, str) and status == "confirmed":
@@ -233,9 +239,10 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         if history and isinstance(history[-1], dict) and history[-1].get("status") != status:
             issues.append(Issue(relative, "latest history status must match Gap status", "$.history"))
         allowed_transitions = {
-            "detected": {"confirmed", "resolved"},
-            "confirmed": {"resolved"},
-            "resolved": {"confirmed"},
+            "detected": {"confirmed", "resolved", "invalidated"},
+            "confirmed": {"detected", "resolved", "invalidated"},
+            "resolved": {"detected", "confirmed", "invalidated"},
+            "invalidated": {"detected", "confirmed", "resolved"},
         }
         for index in range(1, len(history)):
             previous = history[index - 1].get("status") if isinstance(history[index - 1], dict) else None
@@ -250,6 +257,11 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         if (status == "resolved") != isinstance(resolved_at, str):
             issues.append(Issue(relative, "resolved_at must be set exactly when status=resolved", "$.resolved_at"))
         return issues
+
+    @staticmethod
+    def _active_gap_signals(gap: dict[str, Any]) -> list[dict[str, Any]]:
+        """Stage 5 has no superseded Assessments, so every signal is active."""
+        return [signal for signal in gap.get("signals", []) if isinstance(signal, dict)]
 
     def validate_interest(self, interest: Any, relative: str | None = None) -> list[Issue]:
         if isinstance(interest, str):
@@ -569,6 +581,17 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
             raise ValueError(f"duplicate Gap for node/dimension: {node_id}/{dimension}")
         return matches[0] if matches else None
 
+    def _current_assessment_for_evidence(self, evidence_id: str) -> tuple[Path, dict[str, Any]]:
+        """Return the sole Assessment used before reevaluation chains exist."""
+        matches = [
+            item
+            for item in self._read_files("assessments")[0]
+            if isinstance(item[1], dict) and item[1].get("evidence") == evidence_id
+        ]
+        if len(matches) != 1:
+            raise ValueError(f"Evidence requires exactly one Assessment: {evidence_id}")
+        return matches[0]
+
     def _apply_gap_signal(
         self,
         assessment: dict[str, Any],
@@ -647,18 +670,12 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         evidence_matches = self._find_by_id("evidence", evidence_id)
         if len(evidence_matches) != 1:
             raise ValueError(f"unknown or duplicate Evidence: {evidence_id}")
-        assessment_matches = [
-            item for item in self._read_files("assessments")[0]
-            if isinstance(item[1], dict) and item[1].get("evidence") == evidence_id
-        ]
-        if len(assessment_matches) != 1:
-            raise ValueError(f"Evidence requires exactly one Assessment: {evidence_id}")
         evidence = evidence_matches[0][1]
-        assessment = assessment_matches[0][1]
+        assessment_path, assessment = self._current_assessment_for_evidence(evidence_id)
         self._raise_issues(
             self._assessment_node_boundary_issues(
                 assessment,
-                self._relative(assessment_matches[0][0]),
+                self._relative(assessment_path),
             )
         )
         evaluated = assessment.get("evaluated")
@@ -768,7 +785,11 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
 
     def _candidate_data(self, minutes: int) -> dict[str, Any]:
         result = super()._candidate_data(minutes)
-        gap_by_id = {gap["id"]: gap for gap in self.list_gaps()}
+        gap_by_id = {
+            gap["id"]: gap
+            for gap in self.list_gaps()
+            if gap.get("status") != "invalidated"
+        }
         interest_by_id = {interest["id"]: interest for interest in self.list_interests()}
         frontier = self.read("frontier")
         units = {unit["id"]: unit for unit in frontier.get("units", []) if isinstance(unit, dict)}

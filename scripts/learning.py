@@ -105,8 +105,18 @@ def parser() -> argparse.ArgumentParser:
     create_resource.add_argument("input", type=Path, help="Markdown document with YAML frontmatter")
     create_assessment = subcommands.add_parser("create-assessment", help="validate and append an Assessment")
     create_assessment.add_argument("input", type=Path, help="YAML document to create")
+    reevaluate_assessment = subcommands.add_parser(
+        "reevaluate-assessment",
+        help="atomically append a reevaluation and rebuild affected state",
+    )
+    reevaluate_assessment.add_argument("input", type=Path, help="reevaluation Assessment YAML document")
+    active_assessment = subcommands.add_parser(
+        "active-assessment",
+        help="show the active Assessment for one Evidence",
+    )
+    active_assessment.add_argument("evidence_id")
     list_gaps = subcommands.add_parser("list-gaps", help="list persistent learning Gaps")
-    list_gaps.add_argument("--status", choices=("detected", "confirmed", "resolved"))
+    list_gaps.add_argument("--status", choices=("detected", "confirmed", "resolved", "invalidated"))
     create_gap = subcommands.add_parser("create-gap", help="create a semantically reviewed Gap")
     create_gap.add_argument("input", type=Path, help="Gap YAML document")
     gap_impact = subcommands.add_parser("update-gap-impact", help="set semantic Gap routing priority within prerequisite constraints")
@@ -149,6 +159,7 @@ def parser() -> argparse.ArgumentParser:
     routing = subcommands.add_parser("update-routing-metadata", help="refresh Gap impact and activate serviced Interests")
     routing.add_argument("--at", help="RFC 3339 update timestamp")
     subcommands.add_parser("update-progress", help="rebuild derived Progress from Evidence and Assessments")
+    subcommands.add_parser("rebuild-frontier", help="remove invalidated Gap influence from Frontier routing")
     complete_session = subcommands.add_parser("complete-session", help="complete an active Session after Progress update")
     complete_session.add_argument("session_id")
     complete_session.add_argument("--evidence", action="append", default=[], dest="evidence_ids")
@@ -261,6 +272,12 @@ def main(argv: list[str] | None = None) -> int:
             path = repository.create_assessment(load_yaml(args.input))
             print(dump_yaml({"created": str(path.relative_to(repository.root))}), end="")
             return 0
+        if args.command == "reevaluate-assessment":
+            print(dump_yaml(repository.reevaluate_assessment(load_yaml(args.input))), end="")
+            return 0
+        if args.command == "active-assessment":
+            print(dump_yaml({"assessment": repository.active_assessment(args.evidence_id)}), end="")
+            return 0
         if args.command == "list-gaps":
             print(dump_yaml({"gaps": repository.list_gaps(args.status)}), end="")
             return 0
@@ -303,6 +320,9 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.command == "update-progress":
             print(dump_yaml(repository.rebuild_progress()), end="")
+            return 0
+        if args.command == "rebuild-frontier":
+            print(dump_yaml(repository.rebuild_frontier()), end="")
             return 0
         if args.command == "complete-session":
             path, data, outcome = repository.complete_session(args.session_id, args.evidence_ids, args.completed_at)

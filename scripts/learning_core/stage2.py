@@ -198,9 +198,25 @@ class Stage2RepositoryMixin:
             return issues
 
         evidence_id = assessment.get("evidence")
-        expected = Path("assessments") / str(evidence_id) / "001.yaml"
-        if relative.startswith("assessments/") and Path(relative) != expected:
-            issues.append(Issue(relative, f"initial Assessment path must be {expected}"))
+        expected_directory = Path("assessments") / str(evidence_id)
+        relative_path = Path(relative)
+        if relative.startswith("assessments/"):
+            if assessment.get("type") == "reevaluation":
+                if (
+                    relative_path.parent != expected_directory
+                    or not re.fullmatch(r"\d{3}\.yaml", relative_path.name)
+                    or relative_path.name == "001.yaml"
+                ):
+                    issues.append(
+                        Issue(
+                            relative,
+                            f"reevaluation Assessment path must be {expected_directory}/NNN.yaml after 001.yaml",
+                        )
+                    )
+            else:
+                expected = expected_directory / "001.yaml"
+                if relative_path != expected:
+                    issues.append(Issue(relative, f"initial Assessment path must be {expected}"))
         if isinstance(evidence_id, str) and not self._find_by_id("evidence", evidence_id):
             issues.append(Issue(relative, f"assessment references unknown Evidence: {evidence_id}", "$.evidence"))
         return issues

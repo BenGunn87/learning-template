@@ -194,7 +194,7 @@ class Stage3RepositoryMixin(Stage2RepositoryMixin):
             return issues
         relative = relative or f"assessments/{assessment.get('evidence', '<unknown>')}/001.yaml"
         evidence_matches = self._find_by_id("evidence", assessment.get("evidence"))
-        if len(evidence_matches) == 1:
+        if len(evidence_matches) == 1 and assessment.get("type") != "reevaluation":
             evidence_type = evidence_matches[0][1].get("type")
             if assessment.get("type") != evidence_type:
                 issues.append(Issue(relative, f"Assessment type must match Evidence type: {evidence_type}", "$.type"))

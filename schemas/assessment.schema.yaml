@@ -26,6 +26,15 @@ properties:
       - initial
       - practice
       - review
+      - reevaluation
+  supersedes:
+    type: string
+    pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  reason:
+    enum:
+      - user_request
+      - contradiction
+      - rubric_change
   created_at:
     type: string
     format: date-time
@@ -73,6 +82,17 @@ properties:
   review_outcome:
     $ref: '#/$defs/grade'
 allOf:
+  - if:
+      properties:
+        type:
+          const: reevaluation
+      required: [type]
+    then:
+      required: [supersedes, reason]
+    else:
+      properties:
+        supersedes: false
+        reason: false
   - if:
       properties:
         type:
