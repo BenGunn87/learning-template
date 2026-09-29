@@ -384,7 +384,7 @@ class Stage3RepositoryMixin(Stage2RepositoryMixin):
             if not isinstance(action, dict) or action.get("type") not in ACTION_FOR_EVIDENCE.values():
                 raise ValueError(f"invalid Session action: {action}")
             action_type, action_unit = action.get("type"), action.get("unit")
-            if action_unit not in frontier_ids:
+            if action_type != "review" and action_unit not in frontier_ids:
                 raise ValueError(f"Unit is not present in Frontier: {action_unit}")
             state = progress.get(action_unit, {}).get("status", "untouched")
             if action_type == "practice" and state != "practice":
