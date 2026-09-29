@@ -1,6 +1,6 @@
 # Learning Template
 
-Git-based template for learning one large topic through short, adaptive study sessions. The repository is the source of truth: Codex makes semantic learning decisions, while Python scripts validate and render deterministic state.
+Git-based template for learning one large topic through short, adaptive study sessions. The repository is the source of truth: an AI agent (Codex or Claude Code) makes semantic learning decisions, while Python scripts validate and render deterministic state.
 
 Stage 1 implements repository bootstrap and `init`. Stage 2 adds the first complete study Session. Stage 3 adds gap-targeted Practice and spaced Reviews. Stage 4 adds durable checkpoints, pause/resume and crash recovery, timed Session segments, and partially planned Units. Stage 5 adds persistent Gaps, user-declared Interests, adaptive Frontier routing, and explainable routing reasons. Stage 6 adds external, generated, and hybrid Study Modes, immutable generated learning material, multi-Resource Evidence, and compact Discussion summaries. Stage 7 adds append-only Assessment reevaluation, active Assessment chains, Gap reconciliation, and atomic derived-state rebuilds. Unit mastery remains `learning`, `practice`, or `verified`; pausing never changes it.
 
@@ -17,20 +17,30 @@ When using the virtual environment, either activate it or replace `python3` in t
 
 ## Initialize a topic
 
-Open the repository in Codex and say, for example:
+Open the repository in Codex or Claude Code and say, for example:
 
 ```text
 Хочу изучать System Design.
 ```
 
-You can also explicitly invoke `$topic-onboarding`. Codex will conduct a short onboarding and diagnostic, then generate:
+You can also explicitly invoke the Skill: `$topic-onboarding` in Codex or `/topic-onboarding` in Claude Code. The agent will conduct a short onboarding and diagnostic, then generate:
 
 - `learning.yaml` — repository and topic metadata;
 - `config/context.yaml` — goal, constraints, preferences, and diagnostic hypotheses;
 - `map/graph.yaml` — the initial Knowledge Graph;
 - `map/frontier.yaml` — 5–10 planning-only Skeleton Units.
 
-Repository Skills live in `.agents/skills/` so Codex can discover them automatically.
+## Agent support
+
+Both agents share one set of instructions and Skills:
+
+- `AGENTS.md` — repository rules for any agent; Codex reads it directly.
+- `CLAUDE.md` — imports `AGENTS.md` and adds Claude Code notes.
+- `.agents/skills/` — the single source of Repository Skills, discovered by Codex.
+- `.claude/skills` — a symlink to `../.agents/skills`, so Claude Code discovers the same Skills. Edit Skills only in `.agents/skills/`.
+- `.claude/settings.json` — pre-approves `scripts/learning.py` and the test runner in Claude Code; personal overrides go to the ignored `.claude/settings.local.json`.
+
+On Windows, clone with symlinks enabled (`git clone -c core.symlinks=true ...`, which requires Developer Mode or administrator rights). Otherwise replace the link with a copy (`rm .claude/skills && cp -R .agents/skills .claude/skills`) and repeat the copy after every Skill change; `tests/test_agent_compat.py` detects a stale copy.
 
 ## Deterministic commands
 
