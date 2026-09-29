@@ -1,126 +1,134 @@
 format_version: 1
-
 focus:
-  primary: storage-selection
+  primary: architecture-decomposition
   secondary:
-    - transactions
-    - sql-and-nosql
-    - replication
-
+  - service-architecture
+  - tradeoff-analysis
+  - storage-selection
+  - replication
 units:
-  - id: choose-storage-and-indexes
-    title: Choose storage and indexes
-    nodes:
-      - storage-selection
-      - indexing
-    goal: >
-      Закрепить выбор хранилища и индексов в новом backend-сценарии,
-      самостоятельно вывести конкурентную защиту, цену записи и измеримые
-      сигналы пересмотра решения.
-    estimated_minutes: 25
-    priority: high
-    routing_reasons:
-      - type: gap
-        gap: gap-transactions-application-001
-      - type: gap
-        gap: gap-indexing-application-001
-      - type: gap
-        gap: gap-storage-selection-recall-001
-      - type: primary-route
+- id: decompose-a-backend-system
+  title: Decompose a backend system
+  nodes:
+  - architecture-decomposition
+  - service-architecture
+  - tradeoff-analysis
+  goal: 'Закрепить декомпозицию на новом сценарии: самостоятельно провести границы
+    владения данными, выбрать синхронные и асинхронные взаимодействия, обработать
+    отказные случаи и явно назвать цену каждого выделенного сервиса.
 
-  - id: decompose-a-backend-system
-    title: Decompose a backend system
-    nodes:
-      - architecture-decomposition
-      - service-architecture
-      - tradeoff-analysis
-    goal: >
-      Разложить backend-систему на компоненты, потоки данных и границы
-      ответственности, связав декомпозицию с требованиями и компромиссами.
-    estimated_minutes: 25
-    priority: high
-    routing_reasons:
-      - type: primary-route
-      - type: context
+    '
+  estimated_minutes: 25
+  priority: high
+  routing_reasons:
+  - type: primary-route
+  - type: gap
+    gap: gap-service-architecture-application-001
+  - type: gap
+    gap: gap-tradeoff-analysis-application-001
+- id: choose-storage-and-indexes
+  title: Choose storage and indexes
+  nodes:
+  - storage-selection
+  - indexing
+  - transactions
+  goal: 'Закрепить выбор хранилища и индексов в новом backend-сценарии, самостоятельно
+    вывести конкурентную защиту, цену записи и измеримые сигналы пересмотра решения.
 
-  - id: compare-document-and-wide-column-databases
-    title: Compare document and wide-column databases
-    nodes:
-      - document-databases
-      - wide-column-databases
-      - sql-and-nosql
-    goal: >
-      Сравнить документную и wide-column модели через форму данных,
-      паттерны запросов, ключи партиционирования, масштабирование и типичные
-      компромиссы выбора.
-    estimated_minutes: 25
-    priority: medium
-    routing_reasons:
-      - type: interest
-        interest: interest-nosql-database-models
-      - type: context
+    '
+  estimated_minutes: 25
+  priority: high
+  routing_reasons:
+  - type: gap
+    gap: gap-indexing-application-001
+  - type: gap
+    gap: gap-indexing-recall-001
+  - type: gap
+    gap: gap-indexing-understanding-001
+  - type: gap
+    gap: gap-storage-selection-application-001
+  - type: gap
+    gap: gap-storage-selection-recall-001
+  - type: gap
+    gap: gap-transactions-application-001
+  - type: gap
+    gap: gap-transactions-understanding-001
+- id: compare-document-and-wide-column-databases
+  title: Compare document and wide-column databases
+  nodes:
+  - document-databases
+  - wide-column-databases
+  - sql-and-nosql
+  goal: 'Сравнить документную и wide-column модели через форму данных, паттерны запросов,
+    ключи партиционирования, масштабирование и типичные компромиссы выбора.
 
-  - id: model-connected-data-with-graph-databases
-    title: Model connected data with graph databases
-    nodes:
-      - graph-databases
-      - data-modeling
-    goal: >
-      Понять, когда связи и обходы становятся главным паттерном доступа,
-      смоделировать данные как узлы и рёбра и сравнить графовый подход с
-      альтернативными моделями хранения.
-    estimated_minutes: 25
-    priority: medium
-    routing_reasons:
-      - type: interest
-        interest: interest-nosql-database-models
-      - type: context
+    '
+  estimated_minutes: 25
+  priority: medium
+  routing_reasons:
+  - type: interest
+    interest: interest-nosql-database-models
+  - type: context
+- id: model-connected-data-with-graph-databases
+  title: Model connected data with graph databases
+  nodes:
+  - graph-databases
+  - data-modeling
+  goal: 'Понять, когда связи и обходы становятся главным паттерном доступа, смоделировать
+    данные как узлы и рёбра и сравнить графовый подход с альтернативными моделями
+    хранения.
 
-  - id: partition-data-and-handle-hotspots
-    title: Partition data and handle hotspots
-    nodes:
-      - data-partitioning
-      - hot-partitions
-    goal: >
-      Выбирать ключ разбиения по паттернам доступа, оценивать равномерность
-      распределения нагрузки и предлагать способы устранения горячих партиций.
-    estimated_minutes: 25
-    priority: medium
-    blocked_by:
-      - choose-storage-and-indexes
-    routing_reasons:
-      - type: primary-route
-      - type: context
+    '
+  estimated_minutes: 25
+  priority: medium
+  routing_reasons:
+  - type: interest
+    interest: interest-nosql-database-models
+  - type: context
+- id: partition-data-and-handle-hotspots
+  title: Partition data and handle hotspots
+  nodes:
+  - data-partitioning
+  - hot-partitions
+  goal: 'Выбирать ключ разбиения по паттернам доступа, оценивать равномерность распределения
+    нагрузки и предлагать способы устранения горячих партиций.
 
-  - id: replicate-data-across-nodes
-    title: Replicate data across nodes
-    nodes:
-      - replication
-      - leader-follower-replication
-    goal: >
-      Объяснить цели репликации, сравнить синхронную и асинхронную запись
-      и разобрать влияние lag и failover на доступность и сохранность данных.
-    estimated_minutes: 25
-    priority: medium
-    routing_reasons:
-      - type: primary-route
-      - type: context
-      - type: diagnostic
+    '
+  estimated_minutes: 25
+  priority: medium
+  routing_reasons:
+  - type: primary-route
+  - type: context
+- id: replicate-data-across-nodes
+  title: Replicate data across nodes
+  nodes:
+  - replication
+  - leader-follower-replication
+  goal: 'Объяснить цели репликации, сравнить синхронную и асинхронную запись и разобрать
+    влияние lag и failover на доступность и сохранность данных.
 
-  - id: choose-consistency-under-failures
-    title: Choose consistency under failures
-    nodes:
-      - consistency-models
-      - availability-consistency-tradeoff
-      - eventual-consistency
-    goal: >
-      Выбирать необходимые гарантии согласованности для конкретных операций
-      и объяснять их влияние на доступность при задержках и сетевых разделениях.
-    estimated_minutes: 25
-    priority: medium
-    blocked_by:
-      - replicate-data-across-nodes
-    routing_reasons:
-      - type: primary-route
-      - type: context
-      - type: diagnostic
+    '
+  estimated_minutes: 25
+  priority: medium
+  routing_reasons:
+  - type: primary-route
+  - type: context
+  - type: diagnostic
+- id: choose-consistency-under-failures
+  title: Choose consistency under failures
+  nodes:
+  - consistency-models
+  - availability-consistency-tradeoff
+  - eventual-consistency
+  goal: 'Выбирать необходимые гарантии согласованности для конкретных операций и объяснять
+    их влияние на доступность при задержках и сетевых разделениях.
+
+    '
+  estimated_minutes: 25
+  priority: medium
+  blocked_by:
+  - replicate-data-across-nodes
+  routing_reasons:
+  - type: primary-route
+  - type: context
+  - type: diagnostic

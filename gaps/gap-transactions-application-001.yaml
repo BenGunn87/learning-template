@@ -17,6 +17,11 @@ signals:
   result: hard
   observed_nodes:
   - transactions
+- evidence: 2026-09-28-001-review-001
+  assessment: 2026-09-28-001-review-001-assessment-001
+  result: hard
+  observed_nodes:
+  - transactions
 history:
 - status: detected
   at: '2026-09-18T15:59:36+05:00'
@@ -27,4 +32,10 @@ history:
 - status: confirmed
   at: '2026-09-23T16:36:00+05:00'
   evidence: 2026-09-18-003-initial-001
+- status: resolved
+  at: '2026-09-24T17:57:40+05:00'
+  evidence: 2026-09-24-001-practice-001
+- status: confirmed
+  at: '2026-09-28T14:30:35+05:00'
+  evidence: 2026-09-28-001-review-001
 resolved_at: null

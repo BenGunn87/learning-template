@@ -1,0 +1,60 @@
+format_version: 1
+id: 2026-09-28-002
+started_at: '2026-09-28T14:37:25+05:00'
+time_budget_minutes: 25
+status: completed
+plan:
+  unit: estimate-workload-and-capacity
+  actions:
+  - type: review
+    unit: estimate-workload-and-capacity
+  - type: practice
+    unit: decompose-a-backend-system
+actual:
+  unit: estimate-workload-and-capacity
+  actions:
+  - type: review
+    unit: estimate-workload-and-capacity
+    status: completed
+  - type: practice
+    unit: decompose-a-backend-system
+    status: planned
+segments:
+- started_at: '2026-09-28T14:37:25+05:00'
+  ended_at: '2026-09-28T14:38:01+05:00'
+  budget_minutes: 30
+  end_reason: recovered
+- started_at: '2026-09-29T10:43:36+05:00'
+  ended_at: '2026-09-29T10:54:37+05:00'
+  budget_minutes: 25
+  end_reason: completed
+checkpoint:
+  updated_at: '2026-09-29T10:54:37+05:00'
+  unit: decompose-a-backend-system
+  action: practice
+  stage: skipped
+  completed_steps:
+    prompt_shown: true
+    answer_completed: false
+    takeaways_completed: false
+  interaction:
+    prompt: 'Платформа для интернет-магазинов принимает фотографии товаров, создаёт
+      несколько размеров и публикует готовые версии через CDN. Клиенту нужно быстро
+      получить подтверждение загрузки и затем видеть статус обработки. Обработка занимает
+      до нескольких минут; на распродаже бывают резкие пики. Очередь может доставить
+      задание повторно, worker может упасть, а клиент может удалить фото, пока оно
+      обрабатывается. Backend ведёт одна команда. Предложите минимальные компоненты
+      или модули и владельцев данных: кто хранит оригинал, статус задания и готовые
+      версии? Покажите синхронный путь загрузки и асинхронный путь обработки. Как
+      обеспечите корректный результат при повторной доставке, падении worker и удалении
+      во время обработки? Назовите одну спорную границу между отдельным сервисом и
+      модулем, объясните выгоду и цену своего выбора.'
+  note: Пользователь решил пропустить практику после показа задания и перейти к следующей
+    теоретической теме; ответа не было.
+evidence:
+- 2026-09-28-002-review-001
+completed_at: '2026-09-29T10:54:37+05:00'
+last_recovery:
+  recovered_at: '2026-09-29T10:43:36+05:00'
+  segment_closed_at: '2026-09-28T14:38:01+05:00'
+  source: checkpoint

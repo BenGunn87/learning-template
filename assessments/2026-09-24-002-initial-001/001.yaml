@@ -1,0 +1,39 @@
+format_version: 1
+id: 2026-09-24-002-initial-001-assessment-001
+evidence: 2026-09-24-002-initial-001
+type: initial
+created_at: '2026-09-28T12:47:19+05:00'
+result:
+  recall: good
+  understanding: good
+  application: hard
+evaluated:
+  recall:
+    nodes:
+    - architecture-decomposition
+    - service-architecture
+  understanding:
+    nodes:
+    - architecture-decomposition
+    - service-architecture
+    - tradeoff-analysis
+  application:
+    nodes:
+    - service-architecture
+    - tradeoff-analysis
+gaps:
+- 'В практическом сценарии повторный и поздний платёжный callback, невозможность подтвердить
+  истёкший резерв и компенсирующий возврат были сформулированы только после дополнительного
+  вопроса.
+
+  '
+- 'Решение о границе Ticketing сначала осталось неоднозначным и без цены отдельного
+  сервиса; полный trade-off появился после двух уточнений.
+
+  '
+summary: 'Пользователь воспроизвёл критерии границ, объяснил влияние сетевого взаимодействия,
+  согласованности и когезии и предложил разумную декомпозицию. Самостоятельная практическая
+  аргументация была частичной: обработка крайних случаев платёжного потока и полная
+  цена сервисной границы потребовали нескольких целевых уточнений.
+
+  '

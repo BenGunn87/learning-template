@@ -1,0 +1,29 @@
+format_version: 1
+id: 2026-09-28-002-review-001-assessment-001
+evidence: 2026-09-28-002-review-001
+type: review
+created_at: '2026-09-29T10:49:19+05:00'
+result:
+  recall: hard
+  understanding: good
+  application: hard
+review_outcome: hard
+evaluated:
+  recall:
+    nodes:
+    - capacity-estimation
+  understanding:
+    nodes:
+    - capacity-estimation
+  application:
+    nodes:
+    - latency-throughput
+gaps:
+- Формулы среднего и пикового RPS воспроизведены верно, но формула хранения с размером
+  записи, сроком хранения и числом копий не была показана.
+- Пиковая исходящая полоса осталась завышенной после целевого уточнения; перевод 694,44
+  read RPS × 10 KB в Mbit/s не был выполнен верно.
+summary: Пользователь самостоятельно и верно рассчитал средний и пиковый read/write
+  RPS, объяснил допущение о коэффициенте пика и верно уточнил объём хранения как 3
+  TB. Формула хранения не была показана. Расчёт исходящей пропускной способности остался
+  неверным после уточнения, поэтому численное применение требует практики.
