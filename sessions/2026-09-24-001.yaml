@@ -1,0 +1,72 @@
+format_version: 1
+id: 2026-09-24-001
+started_at: '2026-09-24T17:11:28+05:00'
+time_budget_minutes: 25
+status: completed
+plan:
+  unit: choose-storage-and-indexes
+  actions:
+  - type: practice
+    unit: choose-storage-and-indexes
+actual:
+  unit: choose-storage-and-indexes
+  actions:
+  - type: practice
+    unit: choose-storage-and-indexes
+    status: completed
+segments:
+- started_at: '2026-09-24T17:11:28+05:00'
+  ended_at: '2026-09-24T17:58:16+05:00'
+  budget_minutes: 25
+  end_reason: completed
+checkpoint:
+  unit: choose-storage-and-indexes
+  action: practice
+  stage: completed
+  completed_steps:
+    prompt_selected: true
+    answer_completed: true
+    takeaways_completed: true
+  interaction:
+    scenario: Спроектируйте хранение для сервиса назначения курьеров. В регионе одновременно
+      работают до 200 000 курьеров; приложение раз в 5 секунд присылает heartbeat
+      с courier_id, city_id, h3_cell, status и last_seen_at. Для нового заказа нужно
+      найти до 20 доступных курьеров рядом с заданной ячейкой, предпочесть недавно
+      активных и атомарно назначить одного так, чтобы два заказа не получили одного
+      курьера. Также нужны чтение курьера по ID и история его статусов за 30 дней
+      для разбора инцидентов. Региональные данные помещаются на одном сервере, команда
+      хорошо знает PostgreSQL, но heartbeat создаёт около 40 000 обновлений в секунду.
+    prompt: Выберите хранилище или несколько хранилищ, ключи и минимальный набор индексов.
+      Опишите точный механизм конкурентного назначения, одну отвергнутую альтернативу,
+      цену индексов на часто меняющихся полях и измеримый сигнал, после которого решение
+      нужно пересмотреть.
+    answers:
+    - stage: practice
+      prompt: Выберите хранилище или несколько хранилищ.
+      answer: PostgreSQL. Одно хранилище.
+    - stage: practice
+      prompt: Опишите ключи, индексы, конкурентное назначение, альтернативу, цену
+        и сигнал пересмотра.
+      answer: Ключ по courier_id. Индекс по city_id, h3_cell, status; последние поля
+        нужны, чтобы отбрасывать курьеров с занятым статусом и тех, кто давно не отвечал.
+        Также предложен индекс по status и last_seen_at. Для истории — таблица courier_id,
+        status, set_at и индекс по courier_id, set_at. Для назначения можно блокировать
+        строки через SELECT FOR UPDATE. NoSQL отвергнут из-за отсутствия опыта, необходимости
+        атомарности и размещения данных на одной машине. Индексы с датой часто изменяются.
+        Сигнал пересмотра — замедление обновлений, например ухудшение P99 операции
+        обновления.
+    - stage: practice_clarification
+      prompt: Уточните точный составной индекс и последовательность конкурентного
+        назначения.
+      answer: 'Индекс: (city_id, status, h3_cell, last_seen_at DESC). Через SELECT
+        FOR UPDATE выбирается курьер, если запрос сразу выбирает одного. Если сначала
+        выбирается несколько курьеров, используется мягкая блокировка; при UPDATE
+        проверяется, что статус курьера остался available. Если статус изменился,
+        выбирается новый курьер.'
+    takeaways:
+    - По возможности лучше использовать мягкую блокировку.
+  note: Практика и пользовательский вывод завершены; checkpoint готов к созданию Evidence.
+  updated_at: '2026-09-24T17:58:16+05:00'
+evidence:
+- 2026-09-24-001-practice-001
+completed_at: '2026-09-24T17:58:16+05:00'

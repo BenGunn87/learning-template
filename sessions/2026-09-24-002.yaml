@@ -1,0 +1,191 @@
+format_version: 1
+id: 2026-09-24-002
+started_at: '2026-09-24T18:01:57+05:00'
+time_budget_minutes: 25
+status: completed
+plan:
+  unit: decompose-a-backend-system
+  actions:
+  - type: study
+    unit: decompose-a-backend-system
+actual:
+  unit: decompose-a-backend-system
+  actions:
+  - type: study
+    unit: decompose-a-backend-system
+    status: completed
+segments:
+- started_at: '2026-09-24T18:01:57+05:00'
+  ended_at: '2026-09-24T18:01:57+05:00'
+  budget_minutes: 25
+  end_reason: recovered
+- started_at: '2026-09-25T11:11:46+05:00'
+  ended_at: '2026-09-25T13:58:00+05:00'
+  budget_minutes: 25
+  end_reason: recovered
+- started_at: '2026-09-28T11:43:47+05:00'
+  ended_at: '2026-09-28T12:40:05+05:00'
+  budget_minutes: 25
+  end_reason: recovered
+- started_at: '2026-09-28T12:45:28+05:00'
+  ended_at: '2026-09-28T12:50:11+05:00'
+  budget_minutes: 25
+  end_reason: completed
+checkpoint:
+  unit: decompose-a-backend-system
+  action: study
+  stage: completed
+  completed_steps:
+    study_mode_selected: true
+    resource_selected: true
+    study_focus_shown: true
+    study_completed: true
+    discussion_completed: true
+    recall_completed: true
+    practice_completed: true
+    takeaways_completed: true
+  study_mode: hybrid
+  resources:
+  - type: generated
+    id: resource-decompose-backend-20260925-001
+    path: resources/generated/resource-decompose-backend-20260925-001.md
+    title: Декомпозиция backend-системы через ответственность, данные и потоки
+    format: article
+    language: ru
+    estimated_minutes: 8
+    difficulty: intermediate
+    status: completed
+  - type: external
+    title: Use domain analysis to model microservices
+    url: https://learn.microsoft.com/en-us/azure/architecture/microservices/model/domain-analysis
+    format: documentation
+    language: en
+    estimated_minutes: 8
+    difficulty: intermediate
+    status: completed
+  interaction:
+    scenario: 'Сервис продажи билетов на мероприятия. Пользователи часто просматривают
+      афишу и свободные места. При покупке конкретное место резервируется на 10 минут
+      и не должно достаться двум покупателям. Оплата проходит через внешнего провайдера,
+      callback может задержаться или прийти повторно. После успешной оплаты нужно
+      выпустить билет и отправить email; задержка email допустима. Систему развивает
+      одна backend-команда, обычная нагрузка умеренная, но старт продаж создаёт резкие
+      пики чтений и бронирований.
+
+      '
+    prompt: 'Сформулируйте от двух до четырёх кратких выводов из этой Unit своими
+      словами. Каждый вывод напишите отдельным пунктом.
+
+      '
+    answers:
+    - stage: recall
+      prompt: '1) Назовите три основные проверки качества границы компонента и кратко
+        объясните, что каждая из них проверяет. 2) Почему превращение двух тесно координирующихся
+        модулей в отдельные сервисы часто увеличивает сложность? Назовите не менее
+        двух конкретных механизмов этой сложности.
+
+        '
+      answer: '1) Проверяем есть ли единый ответственный за изменение данных. Если
+        многие могут изменять данные, то ответственность размывается и это плохо.
+        Как выполняются атомарные операции. Желательно чтобы атомарные операции выполнялись
+        внутри одного сервиса и было минимальное взаимодействие между сервисами. Как
+        изменения одного сервиса влияют на другие. Если изменение одного сервиса приводит
+        к необходимости так же менять и другие, то разделение плохое. 2) Добавляется
+        взаимодействие по сети, которое добавляет накладные расходы и сложность из-за
+        необходимости учитывать что сеть не надежна. Добавляется сложность обеспечения
+        согласованности: вместо атомарной операции внутри одного сервиса получаем
+        взаимодействие между сервисами.
+
+        '
+    - stage: recall_clarification
+      prompt: 'Что проверяет когезия и какой признак показывает, что ответственность
+        компонента собрана неудачно?
+
+        '
+      answer: 'Когезия показывает, что меняется вместе. Если разработка новой функциональности
+        или изменение старой приводит к необходимости изменять много сервисов, то
+        разделение плохое. При хорошем разделении большая часть изменений будет в
+        одном сервисе.
+
+        '
+    - stage: practice
+      prompt: 'Предложите минимальную декомпозицию backend. Для каждого компонента
+        укажите ответственность и данные, которыми он владеет. Затем опишите синхронный
+        путь покупки и асинхронные действия. В конце выберите хотя бы одну спорную
+        границу: оставить её модулем или вынести в отдельный сервис — и объясните
+        компромисс.
+
+        '
+      answer: 'Компонент афиши и мест хранит мероприятия и статусы мест, выполняет
+        резервирование. Компонент оплаты взаимодействует с внешним платёжным провайдером.
+        Компонент билетов выпускает билеты и отправляет email. Синхронно пользователь
+        резервирует место, затем создаётся платёж. Оплата обрабатывается асинхронно;
+        её компонент вызывает компонент мест для подтверждения брони и запускает выпуск
+        билета. Билет создаётся и email отправляется асинхронно. Ticketing можно оставить
+        внутри компонента афиши, потому что он менее нагружен, но из-за критичности
+        проверки билета его также можно вынести отдельно.
+
+        '
+    - stage: practice_clarification
+      prompt: 'Где обеспечивается идемпотентность повторного callback оплаты и что
+        произойдёт, если успешный callback придёт после истечения резерва? Примите
+        одно решение о границе Ticketing и назовите выигрыш и цену.
+
+        '
+      answer: 'Идемпотентность обеспечивает сервис оплаты: он хранит информацию об
+        уже обработанных заказах. После получения оплаты он синхронно подтверждает
+        бронь в сервисе мест; если это невозможно из-за истечения резерва, запускается
+        возврат средств. Ticketing выносится в отдельный сервис, потому что функционал
+        может развиваться отдельно: личный кабинет со всеми билетами, проверка билетов
+        при входе и другие сценарии.
+
+        '
+    - stage: practice_clarification_2
+      prompt: 'Какова главная цена выноса Ticketing в отдельный сервис именно в этой
+        системе? Назовите один или два конкретных недостатка.
+
+        '
+      answer: 'Наличие дополнительного сервиса и дополнительные сетевые взаимодействия
+        при создании билета.
+
+        '
+    takeaways:
+    - 'Не надо сразу стараться разбить систему на сервисы. Надо сначала продумать,
+      что с чем будет взаимодействовать, кто будет владеть данными и как они будут
+      изменяться.
+
+      '
+    - Учитывать, какие действия должны быть атомарными, синхронными и асинхронными.
+    - Учитывать, как будущие изменения будут влиять на необходимость менять систему.
+  note: 'Recall, understanding, Practice и пользовательские Takeaways завершены; checkpoint
+    готов к созданию Evidence.
+
+    '
+  updated_at: '2026-09-28T12:50:11+05:00'
+evidence:
+- 2026-09-24-002-initial-001
+completed_at: '2026-09-28T12:50:11+05:00'
+last_recovery:
+  recovered_at: '2026-09-28T12:45:28+05:00'
+  segment_closed_at: '2026-09-28T12:40:05+05:00'
+  source: checkpoint
+study:
+  mode: hybrid
+  resources:
+  - type: generated
+    id: resource-decompose-backend-20260925-001
+    path: resources/generated/resource-decompose-backend-20260925-001.md
+    title: Декомпозиция backend-системы через ответственность, данные и потоки
+    format: article
+    language: ru
+    estimated_minutes: 8
+    difficulty: intermediate
+    status: completed
+  - type: external
+    title: Use domain analysis to model microservices
+    url: https://learn.microsoft.com/en-us/azure/architecture/microservices/model/domain-analysis
+    format: documentation
+    language: en
+    estimated_minutes: 8
+    difficulty: intermediate
+    status: completed

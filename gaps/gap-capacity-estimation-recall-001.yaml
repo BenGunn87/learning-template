@@ -1,0 +1,19 @@
+format_version: 1
+id: gap-capacity-estimation-recall-001
+created_at: '2026-09-29T10:49:19+05:00'
+node: capacity-estimation
+dimension: recall
+status: detected
+scope: local
+routing_impact: important
+signals:
+- evidence: 2026-09-28-002-review-001
+  assessment: 2026-09-28-002-review-001-assessment-001
+  result: hard
+  observed_nodes:
+  - capacity-estimation
+history:
+- status: detected
+  at: '2026-09-29T10:49:19+05:00'
+  evidence: 2026-09-28-002-review-001
+resolved_at: null
