@@ -67,3 +67,17 @@ model-data-and-access-patterns:
     due: '2026-09-21'
     interval_days: 3
     repetitions: 0
+replicate-data-across-nodes:
+  status: verified
+  attempts: 1
+  mastery:
+    recall: good
+    understanding: good
+    application: good
+  latest_evidence: 2026-09-29-001-initial-001
+  latest_assessment: 2026-09-29-001-initial-001-assessment-001
+  last_attempt: '2026-09-30T16:20:00+05:00'
+  review:
+    due: '2026-10-07'
+    interval_days: 7
+    repetitions: 0
