@@ -23,6 +23,8 @@ units:
   routing_reasons:
   - type: primary-route
   - type: gap
+    gap: gap-architecture-decomposition-application-001
+  - type: gap
     gap: gap-service-architecture-application-001
   - type: gap
     gap: gap-tradeoff-analysis-application-001
@@ -49,10 +51,6 @@ units:
     gap: gap-storage-selection-application-001
   - type: gap
     gap: gap-storage-selection-recall-001
-  - type: gap
-    gap: gap-transactions-application-001
-  - type: gap
-    gap: gap-transactions-understanding-001
 - id: compare-document-and-wide-column-databases
   title: Compare document and wide-column databases
   nodes:
@@ -132,3 +130,9 @@ units:
   - type: primary-route
   - type: context
   - type: diagnostic
+  - type: gap
+    gap: gap-availability-consistency-tradeoff-application-001
+  - type: gap
+    gap: gap-consistency-models-application-001
+  - type: gap
+    gap: gap-eventual-consistency-application-001

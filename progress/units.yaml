@@ -1,3 +1,13 @@
+choose-consistency-under-failures:
+  status: practice
+  attempts: 1
+  mastery:
+    recall: good
+    understanding: good
+    application: hard
+  latest_evidence: 2026-10-02-001-initial-001
+  latest_assessment: 2026-10-02-001-initial-001-assessment-001
+  last_attempt: '2026-10-02T16:00:00+05:00'
 choose-storage-and-indexes:
   status: practice
   attempts: 3
@@ -15,14 +25,14 @@ choose-storage-and-indexes:
     repetitions: 1
 decompose-a-backend-system:
   status: practice
-  attempts: 1
+  attempts: 2
   mastery:
     recall: good
     understanding: good
     application: hard
-  latest_evidence: 2026-09-24-002-initial-001
-  latest_assessment: 2026-09-24-002-initial-001-assessment-001
-  last_attempt: '2026-09-28T12:46:15+05:00'
+  latest_evidence: 2026-10-01-001-practice-001
+  latest_assessment: 2026-10-01-001-practice-001-assessment-001
+  last_attempt: '2026-10-02T11:00:00+05:00'
 estimate-workload-and-capacity:
   status: practice
   attempts: 3
@@ -55,18 +65,19 @@ frame-a-system-design-problem:
     repetitions: 1
 model-data-and-access-patterns:
   status: verified
-  attempts: 3
+  attempts: 4
   mastery:
-    recall: hard
+    recall: good
     understanding: good
     application: good
-  latest_evidence: 2026-09-18-002-practice-001
-  latest_assessment: 2026-09-18-002-practice-001-assessment-001
-  last_attempt: '2026-09-18T16:24:43+05:00'
+  latest_evidence: 2026-10-01-001-review-001
+  latest_assessment: 2026-10-01-001-review-001-assessment-001
+  last_attempt: '2026-10-02T10:00:00+05:00'
   review:
-    due: '2026-09-21'
-    interval_days: 3
-    repetitions: 0
+    last: '2026-10-02'
+    due: '2026-10-08'
+    interval_days: 6
+    repetitions: 1
 replicate-data-across-nodes:
   status: verified
   attempts: 1
