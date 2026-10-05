@@ -19,7 +19,7 @@ def write_yaml(path: Path, data: object) -> None:
     path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
 
-class Stage3Test(unittest.TestCase):
+class ReviewsTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)

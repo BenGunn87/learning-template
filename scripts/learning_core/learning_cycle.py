@@ -1,4 +1,4 @@
-"""Deterministic Stage 2 validation and repository state transitions."""
+"""Deterministic learning cycle validation and repository state transitions."""
 
 from __future__ import annotations
 
@@ -15,8 +15,8 @@ SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SESSION_PATTERN = re.compile(r"^(\d{4}-\d{2}-\d{2})-(\d{3})$")
 
 
-class Stage2RepositoryMixin:
-    """Mixin kept separate so Stage 1 repository code remains easy to inspect."""
+class LearningCycleRepositoryMixin:
+    """Validate learning records and persist learning cycle state transitions."""
 
     root: Path
 
@@ -249,7 +249,7 @@ class Stage2RepositoryMixin:
                 issues.append(Issue(relative, f"progress references unknown Assessment: {assessment_id}", f"$.{unit_id}.latest_assessment"))
         return issues
 
-    def validate_stage2_repository(self) -> list[Issue]:
+    def validate_learning_records(self) -> list[Issue]:
         issues: list[Issue] = []
         collections: dict[str, list[tuple[Path, Any]]] = {}
         for directory in ("units", "sessions", "evidence", "assessments"):
@@ -433,7 +433,7 @@ class Stage2RepositoryMixin:
         return "verified"
 
     def rebuild_progress(self) -> dict[str, Any]:
-        self._raise_issues(self.validate_stage2_repository())
+        self._raise_issues(self.validate_learning_records())
         evidence_documents, _ = self._read_files("evidence")
         assessment_documents, _ = self._read_files("assessments")
         evidence_by_id = {
@@ -478,7 +478,7 @@ class Stage2RepositoryMixin:
                 return path, session, "already-completed"
             raise ValueError(f"Session is already completed with different Evidence: {session_id}")
         if len(evidence_ids) != 1:
-            raise ValueError("Stage 2 Session completion requires exactly one Evidence id")
+            raise ValueError("Session completion requires exactly one Evidence id")
 
         evidence_documents: list[dict[str, Any]] = []
         for evidence_id in evidence_ids:
@@ -500,7 +500,7 @@ class Stage2RepositoryMixin:
 
         unit_ids = {evidence["unit"] for evidence in evidence_documents}
         if len(unit_ids) != 1:
-            raise ValueError("Stage 2 Session completion supports Evidence for exactly one Unit")
+            raise ValueError("Session completion supports Evidence for exactly one Unit")
         progress = self.read_progress()
         for evidence in evidence_documents:
             if progress.get(evidence["unit"], {}).get("latest_evidence") != evidence["id"]:

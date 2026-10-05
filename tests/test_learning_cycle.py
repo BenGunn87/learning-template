@@ -22,7 +22,7 @@ def write_yaml(path: Path, data: object) -> None:
     path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
 
-class Stage2Test(unittest.TestCase):
+class LearningCycleTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
@@ -271,7 +271,7 @@ class Stage2Test(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, session_id):
             self.repository.create_session("unit-2", 25, "2026-09-14T11:00:00+05:00")
 
-    def test_cli_runs_complete_stage2_write_sequence(self) -> None:
+    def test_cli_runs_complete_learning_cycle_write_sequence(self) -> None:
         unit_input = self.root / "unit-input.yaml"
         evidence_input = self.root / "evidence-input.yaml"
         assessment_input = self.root / "assessment-input.yaml"

@@ -1,4 +1,4 @@
-"""Deterministic Stage 6 resource, Study Mode, and discussion state operations."""
+"""Deterministic Resource, Study Mode, and discussion state operations."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .issues import Issue
-from .stage5 import Stage5RepositoryMixin
+from .routing import RoutingRepositoryMixin
 from .yaml_io import YamlFileError, create_text, load_yaml, load_yaml_text
 
 
@@ -16,10 +16,10 @@ STUDY_MODES = {"external", "generated", "hybrid"}
 RESOURCE_ID_PATTERN = re.compile(r"^resource-[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
-class Stage6RepositoryMixin(Stage5RepositoryMixin):
+class StudyRepositoryMixin(RoutingRepositoryMixin):
     """Add generated Primary Resources and per-attempt Study Mode state."""
 
-    def _stage6_records_required(self) -> bool:
+    def _study_records_required(self) -> bool:
         try:
             learning = self.read("learning")
             version = learning.get("learning_core", {}).get("version", "0.0.0")
@@ -312,11 +312,11 @@ class Stage6RepositoryMixin(Stage5RepositoryMixin):
                     issues.extend(self._mode_resource_issues(study.get("mode"), resources, relative, "$.resources", True))
         return issues
 
-    def validate_stage2_repository(self) -> list[Issue]:
-        issues = super().validate_stage2_repository()
+    def validate_learning_records(self) -> list[Issue]:
+        issues = super().validate_learning_records()
         generated = self.path("resources/generated")
-        if self._stage6_records_required() and not generated.is_dir():
-            issues.append(Issue("resources/generated", "required Stage 6 directory is missing"))
+        if self._study_records_required() and not generated.is_dir():
+            issues.append(Issue("resources/generated", "required generated Resource directory is missing"))
             return issues
         ids: dict[str, list[str]] = {}
         if generated.is_dir():
@@ -371,23 +371,23 @@ class Stage6RepositoryMixin(Stage5RepositoryMixin):
         updated_at: str | None = None,
         action_status: str = "in_progress",
     ) -> tuple[Path, dict[str, Any], str]:
-        if self._stage6_records_required() and checkpoint.get("action") == "study":
+        if self._study_records_required() and checkpoint.get("action") == "study":
             session_path = self.path(f"sessions/{session_id}.yaml")
             session = load_yaml(session_path)
             existing = session.get("checkpoint")
             continuing_legacy = isinstance(existing, dict) and "resource" in existing and "study_mode" not in existing
             if not continuing_legacy and ("study_mode" not in checkpoint or not isinstance(checkpoint.get("resources"), list)):
-                raise ValueError("new Stage 6 study checkpoint requires study_mode and resources")
+                raise ValueError("new study checkpoint requires study_mode and resources")
         return super().update_checkpoint(session_id, checkpoint, updated_at, action_status)
 
     def create_evidence(self, data: Any) -> Path:
         if (
-            self._stage6_records_required()
+            self._study_records_required()
             and isinstance(data, dict)
             and data.get("type") == "initial"
             and not isinstance(data.get("resources"), list)
         ):
-            raise ValueError("new Stage 6 initial Evidence requires resources")
+            raise ValueError("new initial Evidence requires resources")
         return super().create_evidence(data)
 
     def create_generated_resource(self, content: str) -> tuple[Path, str]:

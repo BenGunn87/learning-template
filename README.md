@@ -2,7 +2,7 @@
 
 Git-based template for learning one large topic through short, adaptive study sessions. The repository is the source of truth: an AI agent (Codex or Claude Code) makes semantic learning decisions, while Python scripts validate and render deterministic state.
 
-Stage 1 implements repository bootstrap and `init`. Stage 2 adds the first complete study Session. Stage 3 adds gap-targeted Practice and spaced Reviews. Stage 4 adds durable checkpoints, pause/resume and crash recovery, timed Session segments, and partially planned Units. Stage 5 adds persistent Gaps, user-declared Interests, adaptive Frontier routing, and explainable routing reasons. Stage 6 adds external, generated, and hybrid Study Modes, immutable generated learning material, multi-Resource Evidence, and compact Discussion summaries. Stage 7 adds append-only Assessment reevaluation, active Assessment chains, Gap reconciliation, and atomic derived-state rebuilds. Unit mastery remains `learning`, `practice`, or `verified`; pausing never changes it.
+The system supports topic initialization, complete study Sessions, gap-targeted Practice, and spaced Reviews. Durable checkpoints, pause/resume, crash recovery, and timed Session segments let a Unit continue across several visits. Persistent Gaps and user-declared Interests guide adaptive Frontier routing with explainable reasons. Study Modes use external, generated, or hybrid materials, with immutable generated Resources, multi-Resource Evidence, and compact Discussion summaries. Append-only Assessment reevaluation preserves historical interpretations, reconciles Gaps, and atomically rebuilds derived state. Unit mastery remains `learning`, `practice`, or `verified`; pausing never changes it.
 
 ## Setup
 
@@ -101,4 +101,20 @@ python3 scripts/learning.py complete-session <session-id> --evidence <evidence-i
 python3 -m unittest discover -s tests -v
 ```
 
-See `docs/SPEC.md` for the full MVP architecture and `docs/PLAN_STAGE_*.md` for the implementation stages.
+See `docs/SPEC.md` for the architecture and product requirements.
+
+## Learning core
+
+`scripts/learning.py` is the CLI entry point. `scripts/learning_core/` contains:
+
+| Module | Responsibility |
+| --- | --- |
+| `repository.py` | Repository bootstrap, state detection, shared validation, candidates, and status |
+| `learning_cycle.py` | Unit, Evidence, Assessment, and Session records; learning cycle transitions |
+| `reviews.py` | Targeted Practice and spaced Review scheduling |
+| `sessions.py` | Checkpoints, pause/resume, recovery, and timed segments |
+| `routing.py` | Gaps, Interests, graph expansion, and adaptive routing |
+| `study.py` | Study Modes, Resources, and Discussion state |
+| `reevaluation.py` | Assessment chains, Gap reconciliation, and atomic derived state rebuilds |
+
+The `Repository` class composes the responsibility mixins through their inheritance chain. `issues.py` and `yaml_io.py` provide validation messages and safe YAML persistence.

@@ -33,4 +33,4 @@ The other Skills (`diagnostic`, `build-learning-map`, `build-frontier`, `initial
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
-Keep `docs/PLAN_STAGE_*.md` and `docs/FIX_*.md` as historical records; update `docs/SPEC.md` and `README.md` when behavior changes.
+Keep current product requirements in `docs/SPEC.md` and usage instructions in `README.md`; update both when behavior changes. Completed development plans and fix instructions belong in Git history.

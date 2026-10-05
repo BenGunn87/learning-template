@@ -23,7 +23,7 @@ def write_yaml(path: Path, data: object) -> None:
     path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
 
-class Stage6Test(unittest.TestCase):
+class StudyModesTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
@@ -473,7 +473,7 @@ Quorums coordinate which replicas participate in reads and writes. Their overlap
         stored = yaml.safe_load((self.root / f"sessions/{session['id']}.yaml").read_text())
         self.assertNotIn("discussion_summary", stored["study"])
 
-    def test_legacy_resource_records_validate_but_new_stage6_evidence_must_use_resources(self) -> None:
+    def test_legacy_resource_records_validate_but_new_study_evidence_must_use_resources(self) -> None:
         _, session = self.repository.create_session("quorum-reads-writes", 25, "2026-09-20T10:00:00+05:00")
         legacy = {
             "format_version": 1,

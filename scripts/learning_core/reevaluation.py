@@ -1,4 +1,4 @@
-"""Deterministic Stage 7 append-only Assessment reevaluation operations."""
+"""Deterministic append-only Assessment reevaluation operations."""
 
 from __future__ import annotations
 
@@ -7,15 +7,15 @@ from pathlib import Path
 from typing import Any
 
 from .issues import Issue
-from .stage5 import STRONG_GRADES, WEAK_GRADES
-from .stage6 import Stage6RepositoryMixin
+from .routing import STRONG_GRADES, WEAK_GRADES
+from .study import StudyRepositoryMixin
 from .yaml_io import YamlFileError, create_yaml, load_yaml, replace_yaml
 
 
 REEVALUATION_REASONS = {"user_request", "contradiction", "rubric_change"}
 
 
-class Stage7RepositoryMixin(Stage6RepositoryMixin):
+class ReevaluationRepositoryMixin(StudyRepositoryMixin):
     """Add auditable reevaluation while keeping Evidence immutable."""
 
     def _assessment_records(
@@ -244,8 +244,8 @@ class Stage7RepositoryMixin(Stage6RepositoryMixin):
         unique = {(issue.file, issue.path, issue.message): issue for issue in issues}
         return list(unique.values())
 
-    def validate_stage2_repository(self) -> list[Issue]:
-        issues = super().validate_stage2_repository()
+    def validate_learning_records(self) -> list[Issue]:
+        issues = super().validate_learning_records()
         try:
             records = self._assessment_records()
         except ValueError as exc:

@@ -11,22 +11,22 @@ import yaml
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
-import test_stage5  # noqa: E402
+import test_routing  # noqa: E402
 
 
-class Stage7Test(unittest.TestCase):
+class AssessmentReevaluationTest(unittest.TestCase):
     def setUp(self) -> None:
-        test_stage5.Stage5Test.setUp(self)
+        test_routing.AdaptiveRoutingTest.setUp(self)
 
     def tearDown(self) -> None:
-        test_stage5.Stage5Test.tearDown(self)
+        test_routing.AdaptiveRoutingTest.tearDown(self)
 
     def attempt(self, *args, **kwargs) -> str:
-        return test_stage5.Stage5Test.attempt(self, *args, **kwargs)
+        return test_routing.AdaptiveRoutingTest.attempt(self, *args, **kwargs)
 
     @staticmethod
     def gap_by_key(gaps: list[dict], node: str, dimension: str) -> dict:
-        return test_stage5.Stage5Test.gap_by_key(gaps, node, dimension)
+        return test_routing.AdaptiveRoutingTest.gap_by_key(gaps, node, dimension)
 
     def frontier_units_routed_by_gap(self, gap_id: str) -> list[str]:
         return sorted(
@@ -157,7 +157,7 @@ class Stage7Test(unittest.TestCase):
         gap_id = self.repository.list_gaps()[0]["id"]
         frontier = self.repository.read("frontier")
         frontier["units"][0]["routing_reasons"].append({"type": "gap", "gap": gap_id})
-        test_stage5.write_yaml(self.root / "map/frontier.yaml", frontier)
+        test_routing.write_yaml(self.root / "map/frontier.yaml", frontier)
 
         self.repository.reevaluate_assessment(self.reevaluation(evidence_id, "good"))
 
@@ -244,7 +244,7 @@ class Stage7Test(unittest.TestCase):
             target=f"{evidence_id}-assessment-001",
         )
         path = self.root / f"assessments/{evidence_id}/003.yaml"
-        test_stage5.write_yaml(path, branch)
+        test_routing.write_yaml(path, branch)
 
         rendered = "\n".join(issue.render() for issue in self.repository.validate_repository())
         self.assertIn("branches", rendered)
@@ -272,7 +272,7 @@ class Stage7Test(unittest.TestCase):
     def test_cli_reevaluation_reports_old_new_and_effects(self) -> None:
         evidence_id = self.attempt("initial", "2026-09-14", "hard")
         input_path = self.root / "reevaluation.yaml"
-        test_stage5.write_yaml(input_path, self.reevaluation(evidence_id, "good"))
+        test_routing.write_yaml(input_path, self.reevaluation(evidence_id, "good"))
 
         result = subprocess.run(
             [
@@ -312,7 +312,7 @@ class Stage7Test(unittest.TestCase):
         )
         for sequence, assessment in ((2, second), (3, third)):
             path = self.root / f"assessments/{evidence_id}/{sequence:03d}.yaml"
-            test_stage5.write_yaml(path, assessment)
+            test_routing.write_yaml(path, assessment)
 
         rendered = "\n".join(issue.render() for issue in self.repository.validate_repository())
         self.assertIn("supersedes cycle", rendered)

@@ -279,6 +279,10 @@ status
 session 25
 ```
 
+До инициализации `topic`, Context, Graph и Frontier пусты. Повторный `init`
+не перезаписывает существующую тему или Primary Data. Частичная инициализация
+явно обнаруживается; validation является read-only и не исправляет данные молча.
+
 ---
 
 # 8. Onboarding
@@ -322,7 +326,7 @@ unknown
 
 Если последующее Evidence противоречит Diagnostic, приоритет имеет Evidence.
 
-В Stage 1 результат Diagnostic хранится как Primary Data в секции
+Результат Diagnostic хранится как Primary Data в секции
 `diagnostic` файла `config/context.yaml`. Он не создаёт Progress и не
 подтверждает prerequisites.
 
@@ -431,6 +435,12 @@ Graph expansion is integration-first. При добавлении знаний:
 * новая disconnected или top-level ветка является structural change и требует явного семантического обоснования или подтверждения пользователя.
 
 Несколько самостоятельных top-level areas допустимы. Ограничение на автоматическое применение относится к эволюции Graph, а не к его глобальной форме.
+
+Для automatic delta каждый связный компонент, содержащий новые Nodes, должен
+иметь путь к хотя бы одному Node исходного Graph. Проверка связности не решает
+семантическую дубликацию. Крупное, неоднозначное или несвязанное расширение сначала
+предлагается как structural delta; после подтверждения применяется явно через
+`expand-graph --allow-unanchored`.
 
 ---
 
@@ -617,6 +627,12 @@ size_warning: true
 
 Автоматического Unit splitting в MVP нет.
 
+Planner может начать Unit, которая не помещается целиком в оставшийся budget,
+если время не меньше `session.min_partial_unit_minutes` и пользователь не
+запретил частичное изучение. Это позволяет сочетать короткий Review с началом
+следующей Unit и checkpoint. Продолжение начатой Unit предпочтительнее нового
+Skeleton; второй экземпляр той же Unit не создаётся.
+
 ---
 
 # 20. Resources
@@ -662,6 +678,12 @@ Generated Resource хранится целиком в `resources/generated/<reso
 repository не копируются. Источники, использованные для проверки generated
 статьи, записываются в её frontmatter и не смешиваются с external Resource,
 который непосредственно изучал пользователь.
+
+Generated материал учитывает цель Unit, prerequisites, Context, Diagnostic,
+Progress, Gaps, Interests и глубину изучения. Освоенные prerequisites не
+объясняются повторно без необходимости. Актуальные, быстро меняющиеся или
+зависящие от спецификаций факты проверяются по подходящим источникам. Примеры
+обучающей статьи не раскрывают ответы на будущую Practice.
 
 При инициализации AI-агент предлагает обычно 2–3 варианта.
 
@@ -741,6 +763,20 @@ Discussion относится к поддерживаемому Study, а не �
 `assessment_focus`, но не transcript. Он не создаёт Evidence, не обновляет
 Progress и не подтверждает Gap. Возможная слабость становится Gap только через
 последующие независимые Recall/Practice, Evidence и Assessment.
+
+После Study пользователь самостоятельно восстанавливает основные идеи без
+материала, решает небольшую Practice и формулирует примерно 2–4 Takeaways своими
+словами. AI-агент не пишет Takeaways за пользователя. Незавершённая проверка
+сохраняется только в checkpoint; Evidence создаётся после завершённой попытки.
+
+## Targeted Practice
+
+Для Unit со статусом `practice` проверяется текущая слабая dimension без
+повторного Resource → Study Focus → Study. Слабый recall проверяется восстановлением
+идей, understanding — объяснением механизмов и причин, application — новым
+scenario с решением и trade-off. Новый prompt отличается от предыдущего;
+при возобновлении прерванной Practice сохраняются её prompt и частичные ответы.
+Evidence имеет `type: practice`, `target.dimension` и `based_on.evidence`.
 
 ---
 
@@ -984,6 +1020,30 @@ Progress можно удалить и пересчитать.
 При rebuild для каждого Evidence участвует только его active Assessment.
 Superseded Assessments не влияют на текущее mastery, но сохраняются для аудита.
 
+Статус определяется по `result`: `failed` в recall или understanding возвращает
+Unit в `learning`; иначе `hard` или `failed` в application даёт `practice`;
+иначе Unit становится `verified`. Verified Unit получает Derived Review state.
+
+## Gap lifecycle and attribution
+
+Gap — Primary Data в `gaps/<gap-id>.yaml`, уникальная для пары Node + dimension.
+Signals связывают Evidence, Assessment и результат; history сохраняет переходы.
+Только явно проверенные пары из `Assessment.evaluated` дают новые сигналы:
+`hard`/`failed` — слабые, `good`/`easy` — успешные. Перенесённые grades из
+`result` не считаются новой проверкой.
+
+Первый слабый Evidence создаёт `detected`, второй независимый Evidence —
+`confirmed`. Несколько слабых dimensions в одном Evidence не подтверждают
+одну пару повторно. Успешная проверка той же пары может закрыть как `detected`,
+так и `confirmed` в `resolved`. Последующий новый слабый Evidence переоткрывает
+`resolved` как `confirmed` с прежним Gap ID. `resolved_at` задан только для
+состояния `resolved`.
+
+Gap начинается на самом узком содержательном Node, который реально проверялся.
+`scope: local` относится к этому Node. `cross-concept` требует независимых
+сигналов из нескольких связанных concepts и семантического решения агента;
+детерминированное правило «слабые children → слабый parent» запрещено.
+
 ## Gap provenance after reevaluation
 
 Gap signals являются исторической Primary Data и не удаляются. Signal считается
@@ -1059,6 +1119,8 @@ Context
 Diagnostic
 +
 Gaps
++
+Interests
       ↓
 technical candidates
       ↓
@@ -1081,6 +1143,47 @@ AI-агент решает:
 * чему сейчас педагогически полезнее уделить внимание;
 * какие Skeleton Units создать;
 * какой Focus выбрать.
+
+## Gap and Interest routing
+
+Каждый Frontier Skeleton содержит `routing_reasons`: одну или несколько причин
+`primary-route`, `gap`, `interest`, `context`, `diagnostic` или `user-override`.
+Gap и Interest причины ссылаются на постоянные IDs соответствующих записей.
+
+Gap имеет `routing_impact: blocking | important | minor`. Только confirmed
+prerequisite Gap с зависимой Frontier Unit может быть `blocking`: он ограничивает
+зависимую ветку, а не remediation самого пробела. Зависимость проверяет script.
+`important` повышает приоритет из-за core Node, focus или семантической связи с
+goal/Context; `minor` остаётся для подходящего момента. Семантический выбор между
+`important` и `minor` сохраняется через `update-gap-impact`; confirmed prerequisite
+Gap нельзя понизить из `blocking`.
+
+Remediation выбирается отдельно от Gap: Review для забывания освоенного,
+targeted Practice для application, study Unit для understanding и prerequisite
+Unit для отсутствующих основ. Подходящая существующая Unit предпочтительнее
+новой remedial Unit. Confirmed Gap не обязан становиться следующим действием;
+маршрут не должен состоять только из исправления слабостей.
+
+Только `detected` и `confirmed` Gaps участвуют в routing. Rebuild заново определяет
+Gap reasons по текущим активным Gaps и Nodes каждой Frontier Unit, сохраняя
+остальные причины. `resolved`/`invalidated` исключаются; при переоткрытии влияние
+Gap восстанавливается независимо от прежнего удаления reason. После reevaluation
+выполняются Progress rebuild, Gap reconciliation и Frontier routing rebuild.
+
+## Interests
+
+Interest — явно выраженный запрос пользователя, Primary Data в
+`interests/<interest-id>.yaml`, с исходным `request`, `related_nodes`,
+`source: user`, `status` и lifecycle history. Новая запись имеет `pending`.
+`pending → active` выполняется только когда Frontier Unit явно ссылается на
+Interest в routing reasons; `update-routing-metadata` обновляет это состояние.
+
+`satisfied` требует семантической проверки исходного запроса, связанных Nodes,
+текущей цели, Progress и Evidence; количества Units недостаточно. `dismissed`
+означает явный отказ пользователя от темы. Interest повышает приоритет связанной
+ветки, но не делает её автоматически следующей Unit. Просьба «это следующим»
+обрабатывается как User Override. Если Nodes отсутствуют, применяется минимальное
+расширение существующей ветки по правилам Graph Evolution.
 
 ---
 
@@ -1122,6 +1225,11 @@ Session может включать:
 использованные `study.resources[]` и необязательный компактный
 `study.discussion_summary`. Resource-кандидаты и полный Study transcript в
 Session не сохраняются.
+
+В Session допускается не более одной `study` action: один `session.study`
+хранит состояние одной Study попытки. Ограничение применяется и к ручному
+CLI/API созданию, и к validation существующих файлов. Несколько допустимых
+не-Study actions могут сосуществовать.
 
 ---
 
@@ -1208,6 +1316,13 @@ actual:
 
 Изменение плана является нормальным.
 
+Actual actions имеют `planned`, `in_progress` или `completed`; выполненных
+actions может быть меньше, чем в плане. Session завершается после завершённых
+проверок и сохранения Evidence, Assessment и Progress, либо без Evidence, если
+пользователь остановился до начала любого action. Незавершённое действие для
+продолжения позже сохраняется через pause. Повторные pause/resume/recovery не
+дублируют segments, Evidence или завершённые actions.
+
 ---
 
 # 37. Pause / Checkpoint
@@ -1283,6 +1398,13 @@ Pause не создаёт Evidence и не влияет на mastery. Budget я�
 его `started_at`, новый segment открывается в момент recovery, и только в него
 записывается reconstructed checkpoint.
 
+`last_recovery` хранит `recovered_at`, `segment_closed_at` и
+`source: checkpoint | segment_start`. При отсутствии checkpoint recovery без
+реконструированного смыслового состояния отклоняется. `update-checkpoint` не
+вызывается для stale segment перед recovery; неизвестное время не считается
+активным учебным временем. Recovery сам по себе не создаёт Evidence, Assessment
+или Progress.
+
 ---
 
 # 39. Review
@@ -1294,6 +1416,12 @@ Review не перезаписывает старую попытку.
 Вопрос или Scenario должны отличаться от первоначальных.
 
 AI-агент учитывает предыдущие gaps.
+
+Review предназначен для due verified Unit, использует недавние Evidence и
+исторически слабые dimensions. Resource обычно не открывается повторно;
+проверка достаточно широка для recall, understanding и application. Новый
+Evidence имеет `type: review` и `based_on.previous_evidence`. При паузе сохраняются
+тот же prompt и ответы; due date не пересчитывается до завершённой Assessment.
 
 ---
 
@@ -1308,6 +1436,10 @@ Review не должен захватывать всю Session.
 ```
 
 Это configurable setting.
+
+`review.max_session_share` ограничивает долю бюджета; по умолчанию она равна 0.25.
+Избыток due Reviews распределяется по будущим Sessions без требования закрыть
+весь backlog.
 
 Накопившиеся Review распределяются между Sessions.
 
@@ -1325,6 +1457,13 @@ easy
 ```
 
 На их основании Scripts вычисляют следующий interval.
+
+`calculate-review-outcome` выбирает самый слабый из трёх grades. Начальные
+интервалы находятся в `review.initial_intervals`, множители следующих Review —
+в `review.multipliers`. `failed` сбрасывает interval к начальному failed-значению;
+остальные результаты умножают предыдущий interval с округлением вверх до целых
+дней и минимумом один день. Unit считается due при `review.due <= current date`.
+Review state — Derived Data внутри Progress, а не отдельная Primary сущность.
 
 Сложные алгоритмы вроде FSRS не входят в первую реализацию.
 
@@ -1705,11 +1844,9 @@ Web UI не входит в MVP.
 
 ---
 
-# 57. Implementation Strategy
+# 57. Learning Workflow
 
-Спецификация описывает целевую модель MVP, но первая реализация не должна пытаться реализовать всё одновременно.
-
-Первый вертикальный срез:
+Основной учебный workflow:
 
 ```text
 init
@@ -1731,9 +1868,7 @@ Progress
 status
 ```
 
-На этом этапе система уже должна позволять реально начать изучать `System Design`.
-
-После проверки вертикального среза добавляются:
+Для продолжения обучения и обслуживания состояния используются:
 
 ```text
 Reviews
@@ -1742,7 +1877,7 @@ Rebuild
 Graph Evolution
 Recalibration
 Assessment Reevaluation
-Indexes optimisation
+Indexes
 ```
 
 ---

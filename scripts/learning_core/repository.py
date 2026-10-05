@@ -10,11 +10,11 @@ from jsonschema.exceptions import SchemaError
 from jsonschema.validators import validator_for
 
 from .issues import Issue
-from .stage7 import Stage7RepositoryMixin
+from .reevaluation import ReevaluationRepositoryMixin
 from .yaml_io import YamlFileError, dump_yaml, load_yaml
 
 
-class Repository(Stage7RepositoryMixin):
+class Repository(ReevaluationRepositoryMixin):
     DOCUMENTS = {
         "learning": Path("learning.yaml"),
         "context": Path("config/context.yaml"),
@@ -229,11 +229,11 @@ class Repository(Stage7RepositoryMixin):
             try:
                 learning = self.read("learning")
                 version = learning.get("learning_core", {}).get("version", "0.0.0")
-                stage5_repository = tuple(int(part) for part in version.split(".")) >= (0, 5, 0)
+                routing_reasons_required = tuple(int(part) for part in version.split(".")) >= (0, 5, 0)
             except (AttributeError, TypeError, ValueError, YamlFileError):
-                stage5_repository = False
-            if stage5_repository and not reasons:
-                issues.append(Issue("map/frontier.yaml", "Stage 5 Unit requires at least one routing reason", f"$.units[{index}].routing_reasons"))
+                routing_reasons_required = False
+            if routing_reasons_required and not reasons:
+                issues.append(Issue("map/frontier.yaml", "Frontier Unit requires at least one routing reason", f"$.units[{index}].routing_reasons"))
             for reason_index, reason in enumerate(reasons):
                 if not isinstance(reason, dict):
                     continue
@@ -301,7 +301,7 @@ class Repository(Stage7RepositoryMixin):
                 if tuple(int(part) for part in version.split(".")) >= (0, 5, 0):
                     for directory in ("gaps", "interests"):
                         if not self.path(directory).is_dir():
-                            issues.append(Issue(directory, "required Stage 5 directory is missing"))
+                            issues.append(Issue(directory, "required adaptive routing directory is missing"))
             except (AttributeError, TypeError, ValueError):
                 pass
         issues.extend(self._validate_settings())
@@ -327,7 +327,7 @@ class Repository(Stage7RepositoryMixin):
             if isinstance(frontier, dict):
                 issues.extend(self.validate_frontier(frontier, graph))
 
-        issues.extend(self.validate_stage2_repository())
+        issues.extend(self.validate_learning_records())
 
         unique: dict[tuple[str, str, str], Issue] = {}
         for issue in issues:

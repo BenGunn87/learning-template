@@ -5,7 +5,7 @@ description: Build or rebuild the adaptive Frontier with five to ten planning-on
 
 # Build the adaptive Frontier
 
-Read `docs/SPEC.md`, `docs/PLAN_STAGE_5.md`, `config/context.yaml`, `config/settings.yaml`, `map/graph.yaml`, `schemas/frontier.schema.yaml`, and current `progress/`, `gaps/`, and `interests/` data. Get deterministic technical input with:
+Read `docs/SPEC.md`, `config/context.yaml`, `config/settings.yaml`, `map/graph.yaml`, `schemas/frontier.schema.yaml`, and current `progress/`, `gaps/`, and `interests/` data. Get deterministic technical input with:
 
 ```bash
 python3 scripts/learning.py candidates

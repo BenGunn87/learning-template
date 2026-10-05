@@ -1,4 +1,4 @@
-"""Stage 5 adaptive routing, persistent gaps, and user interests."""
+"""Adaptive routing, persistent gaps, and user interests."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .issues import Issue
-from .stage4 import Stage4RepositoryMixin
+from .sessions import SessionsRepositoryMixin
 from .yaml_io import YamlFileError, create_yaml, load_yaml, replace_yaml
 
 
@@ -22,8 +22,8 @@ INTEREST_TRANSITIONS = {
 }
 
 
-class Stage5RepositoryMixin(Stage4RepositoryMixin):
-    """Add Primary Gap/Interest data without changing earlier-stage models."""
+class RoutingRepositoryMixin(SessionsRepositoryMixin):
+    """Manage Primary Gap/Interest data and adaptive routing metadata."""
 
     def _graph_node_ids(self) -> set[str]:
         graph = self.read("graph")
@@ -260,7 +260,7 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
 
     @staticmethod
     def _active_gap_signals(gap: dict[str, Any]) -> list[dict[str, Any]]:
-        """Stage 5 has no superseded Assessments, so every signal is active."""
+        """Return all signals; the reevaluation mixin filters superseded Assessments."""
         return [signal for signal in gap.get("signals", []) if isinstance(signal, dict)]
 
     def validate_interest(self, interest: Any, relative: str | None = None) -> list[Issue]:
@@ -296,8 +296,8 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
             issues.append(Issue(relative, "Interest history must start with pending", "$.history[0].status"))
         return issues
 
-    def validate_stage2_repository(self) -> list[Issue]:
-        issues = super().validate_stage2_repository()
+    def validate_learning_records(self) -> list[Issue]:
+        issues = super().validate_learning_records()
         collections: dict[str, list[tuple[Path, Any]]] = {}
         for directory in ("gaps", "interests"):
             documents, read_issues = self._read_files(directory)
@@ -582,7 +582,7 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         return matches[0] if matches else None
 
     def _current_assessment_for_evidence(self, evidence_id: str) -> tuple[Path, dict[str, Any]]:
-        """Return the sole Assessment used before reevaluation chains exist."""
+        """Return the sole Assessment; the reevaluation mixin resolves active chains."""
         matches = [
             item
             for item in self._read_files("assessments")[0]
@@ -720,14 +720,14 @@ class Stage5RepositoryMixin(Stage4RepositoryMixin):
         return super().rebuild_progress()
 
     def create_assessment(self, data: Any) -> Path:
-        if isinstance(data, dict) and self._stage5_assessment_required() and not isinstance(data.get("evaluated"), dict):
-            raise ValueError("new Stage 5 Assessment requires evaluated dimension-to-node attribution")
+        if isinstance(data, dict) and self._evaluated_attribution_required() and not isinstance(data.get("evaluated"), dict):
+            raise ValueError("new Assessment requires evaluated dimension-to-node attribution")
         path = super().create_assessment(data)
         if isinstance(data, dict) and isinstance(data.get("evidence"), str):
             self.update_gaps_for_evidence(data["evidence"])
         return path
 
-    def _stage5_assessment_required(self) -> bool:
+    def _evaluated_attribution_required(self) -> bool:
         try:
             learning = self.read("learning")
             version = learning.get("learning_core", {}).get("version", "0.0.0")

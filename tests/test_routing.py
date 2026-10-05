@@ -19,7 +19,7 @@ def write_yaml(path: Path, data: object) -> None:
     path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
 
-class Stage5Test(unittest.TestCase):
+class AdaptiveRoutingTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
@@ -482,7 +482,7 @@ class Stage5Test(unittest.TestCase):
         write_yaml(self.root / "learning.yaml", learning)
         self.assertEqual([], self.repository.validate_repository())
 
-    def test_new_stage5_assessment_requires_evaluated(self) -> None:
+    def test_new_assessment_requires_evaluated_attribution(self) -> None:
         with self.assertRaisesRegex(ValueError, "requires evaluated"):
             self.attempt(
                 "initial",
@@ -604,7 +604,7 @@ class Stage5Test(unittest.TestCase):
         )
         self.assertEqual(["document-databases"], result["added_nodes"])
 
-    def test_stage5_frontier_requires_explainable_routing(self) -> None:
+    def test_frontier_requires_explainable_routing(self) -> None:
         frontier = self.repository.read("frontier")
         del frontier["units"][0]["routing_reasons"]
         issues = self.repository.validate_frontier(frontier)

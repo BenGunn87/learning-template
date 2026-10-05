@@ -1,6 +1,6 @@
 ---
 name: build-learning-map
-description: Build the initial Stage 1 knowledge graph from the repository Context and diagnostic, or validate an existing initial graph without adding user progress.
+description: Build the initial knowledge graph from the repository Context and diagnostic, or validate an existing initial graph without adding user progress.
 ---
 
 # Build the initial knowledge graph

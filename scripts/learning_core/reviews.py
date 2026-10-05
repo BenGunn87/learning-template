@@ -1,4 +1,4 @@
-"""Deterministic Stage 3 targeted-practice and review operations."""
+"""Deterministic targeted-practice and review operations."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .issues import Issue
-from .stage2 import SESSION_PATTERN, Stage2RepositoryMixin
+from .learning_cycle import SESSION_PATTERN, LearningCycleRepositoryMixin
 from .yaml_io import YamlFileError, create_yaml, load_yaml, replace_yaml
 
 
@@ -16,7 +16,7 @@ OUTCOME_ORDER = {"failed": 0, "hard": 1, "good": 2, "easy": 3}
 ACTION_FOR_EVIDENCE = {"initial": "study", "practice": "practice", "review": "review"}
 
 
-class Stage3RepositoryMixin(Stage2RepositoryMixin):
+class ReviewsRepositoryMixin(LearningCycleRepositoryMixin):
     """Add gap-targeted attempts and derived spaced-review scheduling."""
 
     def _settings(self) -> dict[str, Any]:
@@ -431,7 +431,7 @@ class Stage3RepositoryMixin(Stage2RepositoryMixin):
         return path, data
 
     def rebuild_progress(self) -> dict[str, Any]:
-        self._raise_issues(self.validate_stage2_repository())
+        self._raise_issues(self.validate_learning_records())
         evidence_documents, _ = self._read_files("evidence")
         assessment_documents, _ = self._read_files("assessments")
         evidence_by_id = {

@@ -1,4 +1,4 @@
-"""Deterministic Stage 4 pause, resume, checkpoint, and segment operations."""
+"""Deterministic Session pause, resume, checkpoint, and segment operations."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from .issues import Issue
-from .stage2 import SESSION_PATTERN
-from .stage3 import ACTION_FOR_EVIDENCE, Stage3RepositoryMixin
+from .learning_cycle import SESSION_PATTERN
+from .reviews import ACTION_FOR_EVIDENCE, ReviewsRepositoryMixin
 from .yaml_io import create_yaml, load_yaml, replace_yaml
 
 
@@ -17,7 +17,7 @@ UNFINISHED_SESSION_STATUSES = {"active", "paused"}
 ACTION_STATUSES = {"planned", "in_progress", "completed"}
 
 
-class Stage4RepositoryMixin(Stage3RepositoryMixin):
+class SessionsRepositoryMixin(ReviewsRepositoryMixin):
     """Add resumable logical Sessions made of one or more timed segments."""
 
     @staticmethod
@@ -140,8 +140,8 @@ class Stage4RepositoryMixin(Stage3RepositoryMixin):
                         issues.append(Issue(relative, "checkpoint cannot precede the Session", "$.checkpoint.updated_at"))
         return issues
 
-    def validate_stage2_repository(self) -> list[Issue]:
-        issues = super().validate_stage2_repository()
+    def validate_learning_records(self) -> list[Issue]:
+        issues = super().validate_learning_records()
         resumable = self._resumable_documents()
         if len(resumable) > 1:
             ids = ", ".join(str(data.get("id")) for _, data in resumable)

@@ -29,4 +29,4 @@ Continue the same init flow by reading and following, in order:
 2. `../build-learning-map/SKILL.md`
 3. `../build-frontier/SKILL.md`
 
-Finish with `python3 scripts/learning.py validate` and `python3 scripts/learning.py status`. Do not begin a full learning Unit during Stage 1.
+Finish with `python3 scripts/learning.py validate` and `python3 scripts/learning.py status`. Do not begin a full learning Unit during topic initialization.
