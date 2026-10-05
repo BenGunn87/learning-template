@@ -1,0 +1,19 @@
+format_version: 1
+id: gap-availability-consistency-tradeoff-application-001
+created_at: '2026-10-02T16:00:00+05:00'
+node: availability-consistency-tradeoff
+dimension: application
+status: detected
+scope: local
+routing_impact: important
+signals:
+- evidence: 2026-10-02-001-initial-001
+  assessment: 2026-10-02-001-initial-001-assessment-001
+  result: hard
+  observed_nodes:
+  - availability-consistency-tradeoff
+history:
+- status: detected
+  at: '2026-10-02T16:00:00+05:00'
+  evidence: 2026-10-02-001-initial-001
+resolved_at: null

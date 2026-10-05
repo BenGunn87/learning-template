@@ -1,0 +1,19 @@
+format_version: 1
+id: gap-architecture-decomposition-application-001
+created_at: '2026-10-02T11:00:00+05:00'
+node: architecture-decomposition
+dimension: application
+status: detected
+scope: local
+routing_impact: important
+signals:
+- evidence: 2026-10-01-001-practice-001
+  assessment: 2026-10-01-001-practice-001-assessment-001
+  result: hard
+  observed_nodes:
+  - architecture-decomposition
+history:
+- status: detected
+  at: '2026-10-02T11:00:00+05:00'
+  evidence: 2026-10-01-001-practice-001
+resolved_at: null
