@@ -22,12 +22,6 @@ units:
   priority: high
   routing_reasons:
   - type: primary-route
-  - type: gap
-    gap: gap-architecture-decomposition-application-001
-  - type: gap
-    gap: gap-service-architecture-application-001
-  - type: gap
-    gap: gap-tradeoff-analysis-application-001
 - id: choose-storage-and-indexes
   title: Choose storage and indexes
   nodes:
@@ -136,3 +130,19 @@ units:
     gap: gap-consistency-models-application-001
   - type: gap
     gap: gap-eventual-consistency-application-001
+- id: coordinate-distributed-transactions
+  title: Coordinate distributed transactions
+  nodes:
+  - distributed-transactions
+  - saga-pattern
+  - transactional-outbox
+  - two-phase-commit
+  goal: 'Понять, почему одна операция над данными нескольких сервисов не помещается
+    в локальную транзакцию, сравнить 2PC, сагу с компенсациями и transactional outbox,
+    и выбирать механизм с учётом отказов, повторной доставки и идемпотентности.
+
+    '
+  estimated_minutes: 25
+  priority: high
+  routing_reasons:
+  - type: user-override

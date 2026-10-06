@@ -1,0 +1,19 @@
+format_version: 1
+id: gap-design-process-recall-001
+created_at: '2026-10-06T12:46:00+05:00'
+node: design-process
+dimension: recall
+status: detected
+scope: local
+routing_impact: important
+signals:
+- evidence: 2026-10-06-001-review-001
+  assessment: 2026-10-06-001-review-001-assessment-001
+  result: failed
+  observed_nodes:
+  - design-process
+history:
+- status: detected
+  at: '2026-10-06T12:46:00+05:00'
+  evidence: 2026-10-06-001-review-001
+resolved_at: null

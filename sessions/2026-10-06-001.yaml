@@ -1,0 +1,64 @@
+format_version: 1
+id: 2026-10-06-001
+started_at: '2026-10-06T12:31:24+05:00'
+time_budget_minutes: 30
+status: completed
+plan:
+  unit: frame-a-system-design-problem
+  actions:
+  - type: review
+    unit: frame-a-system-design-problem
+  - type: practice
+    unit: decompose-a-backend-system
+actual:
+  unit: frame-a-system-design-problem
+  actions:
+  - type: review
+    unit: frame-a-system-design-problem
+    status: completed
+  - type: practice
+    unit: decompose-a-backend-system
+    status: completed
+segments:
+- started_at: '2026-10-06T12:31:24+05:00'
+  ended_at: '2026-10-06T15:22:11+05:00'
+  budget_minutes: 30
+  end_reason: completed
+checkpoint:
+  unit: decompose-a-backend-system
+  action: practice
+  stage: completed
+  completed_steps:
+    prompt_shown: true
+    answer_completed: true
+    takeaways_completed: true
+  interaction:
+    prompt: "Программа лояльности сети из 300 кофеен. Касса (POS) в кофейне при покупке\
+      \ начисляет\nбаллы (5% от чека) и позволяет оплатить баллами до 50% чека. Интернет\
+      \ в кофейнях\nнестабилен: касса может быть офлайн до 2 часов, но должна продолжать\
+      \ продавать.\nБаланс баллов не может уйти в минус. Баллы можно обменять на билет\
+      \ в кино у\nпартнёра: партнёрский API медленный (до 10 с) и иногда отвечает\
+      \ таймаутом, хотя билет\nуже выпущен. Мобильное приложение показывает баланс\
+      \ и историю операций; после покупки\nгостю уходит push «+N баллов». Раз в месяц\
+      \ финансы получают отчёт по обязательствам\n(сумма невыкупленных баллов). Backend\
+      \ делает одна команда из 3 человек.\n\n1. Минимальный набор сервисов/модулей\
+      \ и владелец данных для каждого: баланс и история\n   операций, обмены на билеты,\
+      \ профиль гостя, отчёт для финансов.\n2. Где синхронное, а где асинхронное взаимодействие\
+      \ (покупка онлайн, покупка офлайн с\n   последующей синхронизацией, обмен на\
+      \ билет, push, отчёт)?\n3. Как гарантировать, что баланс не уйдёт в минус —\
+      \ с учётом офлайн-касс и\n   одновременного списания с двух касс/приложения?\
+      \ Где проходит гарантия (уровень БД /\n   кода / процесса) и что делаешь, если\
+      \ после синхронизации офлайн-списание всё же\n   даёт минус?\n4. Обмен на билет:\
+      \ таймаут партнёра при уже выпущенном билете и повторный вызов.\n   Конкретный\
+      \ механизм (порядок шагов, ключ идемпотентности, компенсация).\n5. Назови цену\
+      \ каждого выделенного сервиса для команды из 3 человек и что оставишь\n   модулем\
+      \ + сигнал, при котором выделишь его позже.\n"
+  note: Clarification given — business wants offline points payment allowed with user-proposed
+    limits and accepted risk. Targets previous gaps — DB-level guarantee, concrete
+    saga/outbox mechanism, idempotency key per operation, explicit cost of services
+    for a small team.
+  updated_at: '2026-10-06T15:22:11+05:00'
+evidence:
+- 2026-10-06-001-review-001
+- 2026-10-06-001-practice-001
+completed_at: '2026-10-06T15:22:11+05:00'

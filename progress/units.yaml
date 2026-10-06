@@ -24,15 +24,19 @@ choose-storage-and-indexes:
     interval_days: 5
     repetitions: 1
 decompose-a-backend-system:
-  status: practice
-  attempts: 2
+  status: verified
+  attempts: 4
   mastery:
     recall: good
     understanding: good
-    application: hard
-  latest_evidence: 2026-10-01-001-practice-001
-  latest_assessment: 2026-10-01-001-practice-001-assessment-001
-  last_attempt: '2026-10-02T11:00:00+05:00'
+    application: good
+  latest_evidence: 2026-10-06-001-practice-001
+  latest_assessment: 2026-10-06-001-practice-001-assessment-001
+  last_attempt: '2026-10-06T13:02:00+05:00'
+  review:
+    due: '2026-10-13'
+    interval_days: 7
+    repetitions: 0
 estimate-workload-and-capacity:
   status: practice
   attempts: 3
@@ -49,20 +53,20 @@ estimate-workload-and-capacity:
     interval_days: 5
     repetitions: 1
 frame-a-system-design-problem:
-  status: verified
-  attempts: 3
+  status: learning
+  attempts: 4
   mastery:
-    recall: good
+    recall: failed
     understanding: good
-    application: good
-  latest_evidence: 2026-09-22-001-review-001
-  latest_assessment: 2026-09-22-001-review-001-assessment-001
-  last_attempt: '2026-09-22T19:06:00+05:00'
+    application: hard
+  latest_evidence: 2026-10-06-001-review-001
+  latest_assessment: 2026-10-06-001-review-001-assessment-001
+  last_attempt: '2026-10-06T12:45:00+05:00'
   review:
-    last: '2026-09-22'
-    due: '2026-10-06'
-    interval_days: 14
-    repetitions: 1
+    last: '2026-10-06'
+    due: '2026-10-07'
+    interval_days: 1
+    repetitions: 2
 model-data-and-access-patterns:
   status: verified
   attempts: 4
