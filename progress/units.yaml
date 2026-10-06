@@ -1,13 +1,17 @@
 choose-consistency-under-failures:
-  status: practice
-  attempts: 1
+  status: verified
+  attempts: 2
   mastery:
     recall: good
     understanding: good
-    application: hard
-  latest_evidence: 2026-10-02-001-initial-001
-  latest_assessment: 2026-10-02-001-initial-001-assessment-001
-  last_attempt: '2026-10-02T16:00:00+05:00'
+    application: good
+  latest_evidence: 2026-10-06-002-practice-001
+  latest_assessment: 2026-10-06-002-practice-001-assessment-001
+  last_attempt: '2026-10-06T16:25:00+05:00'
+  review:
+    due: '2026-10-13'
+    interval_days: 7
+    repetitions: 0
 choose-storage-and-indexes:
   status: practice
   attempts: 3

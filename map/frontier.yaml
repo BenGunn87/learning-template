@@ -124,12 +124,6 @@ units:
   - type: primary-route
   - type: context
   - type: diagnostic
-  - type: gap
-    gap: gap-availability-consistency-tradeoff-application-001
-  - type: gap
-    gap: gap-consistency-models-application-001
-  - type: gap
-    gap: gap-eventual-consistency-application-001
 - id: coordinate-distributed-transactions
   title: Coordinate distributed transactions
   nodes:
