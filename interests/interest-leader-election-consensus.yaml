@@ -1,0 +1,13 @@
+format_version: 1
+id: interest-leader-election-consensus
+created_at: '2026-10-08T11:38:38+05:00'
+source: user
+request: Сохрани «выбор leader / консенсус» как отдельный интерес. Надо подробнее
+  разобраться в механизме назначения лидера.
+related_nodes:
+- distributed-coordination
+- leader-follower-replication
+status: pending
+history:
+- status: pending
+  at: '2026-10-08T11:38:38+05:00'
