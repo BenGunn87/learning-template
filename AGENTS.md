@@ -24,7 +24,7 @@ Skills live in `.agents/skills/<name>/SKILL.md` (Claude Code sees the same files
 | Asks about progress or status | `status` |
 | Mentions a topic to study later or deeper | `capture-interest` |
 
-The other Skills (`diagnostic`, `build-learning-map`, `build-frontier`, `initialize-unit`, `run-study`, `find-resources`, `run-practice`, `run-review`, `assess-answer`) are loaded by these entry points; follow their references rather than skipping steps.
+The other Skills (`diagnostic`, `build-learning-map`, `build-frontier`, `initialize-unit`, `run-study`, `find-resources`, `run-practice`, `run-review`, `assess-answer`, `run-remediation`) are loaded by these entry points; follow their references rather than skipping steps.
 
 ## Development
 

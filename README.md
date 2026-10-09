@@ -4,6 +4,8 @@ Git-based template for learning one large topic through short, adaptive study se
 
 The system supports topic initialization, complete study Sessions, gap-targeted Practice, and spaced Reviews. Durable checkpoints, pause/resume, crash recovery, and timed Session segments let a Unit continue across several visits. Persistent Gaps and user-declared Interests guide adaptive Frontier routing with explainable reasons. Study Modes use external, generated, or hybrid materials, with immutable generated Resources, multi-Resource Evidence, and compact Discussion summaries. Append-only Assessment reevaluation preserves historical interpretations, reconciles Gaps, and atomically rebuilds derived state. Unit mastery remains `learning`, `practice`, or `verified`; pausing never changes it.
 
+After a Practice/Review Assessment, optional Remediation teaches an active Gap inside the same Session: clarify, explain with an example, or give a saved mini-lesson. Guided work does not count as Evidence or change mastery, Gap status, routing, or Review dates. Ordinary later Practice/Review independently verifies the result: **repair now, verify later**.
+
 ## Setup
 
 Create a repository from this template, then install the two Python dependencies:
@@ -54,6 +56,8 @@ python3 scripts/learning.py session-candidates --minutes 25
 python3 scripts/learning.py get-practice-units
 python3 scripts/learning.py get-due-reviews
 python3 scripts/learning.py list-gaps
+python3 scripts/learning.py list-remediations [--session <session-id>] [--gap <gap-id>]
+python3 scripts/learning.py validate remediation <remediation-id>
 python3 scripts/learning.py list-interests
 python3 scripts/learning.py detect-weak-signals
 python3 scripts/learning.py active-assessment <evidence-id>
@@ -83,6 +87,9 @@ python3 scripts/learning.py create-unit <unit.yaml>
 python3 scripts/learning.py create-evidence <evidence.yaml>
 python3 scripts/learning.py create-generated-resource <resource.md>
 python3 scripts/learning.py create-assessment <assessment.yaml>
+python3 scripts/learning.py start-remediation <remediation.yaml>
+python3 scripts/learning.py complete-remediation <remediation-id>
+python3 scripts/learning.py skip-remediation <session-id>
 python3 scripts/learning.py reevaluate-assessment <reevaluation.yaml>
 python3 scripts/learning.py create-interest <interest.yaml>
 python3 scripts/learning.py update-interest <interest-id> --status satisfied
@@ -94,6 +101,12 @@ python3 scripts/learning.py complete-session <session-id> --evidence <evidence-i
 ```
 
 `state` reports `uninitialized`, `partial`, or `initialized`. Validation is read-only. Evidence and generated Resources are immutable; Assessment Events are append-only and may form a validated linear reevaluation chain. Gaps and Interests preserve lifecycle history; Session checkpoint state is atomically replaceable; Progress and Frontier remain derived. Automatic `expand-graph` deltas must connect new nodes to the existing Graph; `--allow-unanchored` is reserved for an explicitly approved structural delta. A repeated `init` must not overwrite an initialized topic or existing Primary Data. One repository may contain at most one Session whose status is `active` or `paused`.
+
+For `start-remediation`, stage a YAML mapping with a unique `id: remediation-...`, `session`, `unit`, `gap`, `source_evidence`, `source_assessment`, `level: 1 | 2 | 3`, and `focus`. The source Practice/Review action must remain unfinished; its Assessment must be active and have a matching Gap signal. The command defaults `step: explanation`, empty `misconceptions_addressed`, `guided_exercise: false`, and `resource: null`. Use `update-checkpoint` to retain teaching steps, escalate the level, and record guided-work flags.
+
+Level 3 uses `create-generated-resource` with ordinary frontmatter plus `purpose: remediation` and `gap`; the command attaches the immutable mini-lesson to the active checkpoint. Normal generated Study material uses `purpose: study`; historical resources without a purpose still mean Study and require the same Study action as before. Pause/resume retains the source `action: practice | review`, `phase: remediation`, teaching ID, level, step, and saved Resource, without creating another attempt or regenerating material.
+
+Completion appends `Gap.remediations[]` and lightweight `Session.remediations[]` references, then returns to the source Assessment checkpoint. It is idempotent and leaves the action unfinished so another selected Gap can be taught before normal action/Session completion. Skipping records only `Session.skipped_remediations`; any saved mini-lesson remains valid through that reference. `complete-session` during teaching performs this skip and requires the already-created source Evidence. None of these operations rebuilds Progress or Frontier. Multi-file writes roll back on ordinary write errors; an abrupt process termination between file writes can still require repository repair.
 
 ## Tests
 
@@ -116,5 +129,6 @@ See `docs/SPEC.md` for the architecture and product requirements.
 | `routing.py` | Gaps, Interests, graph expansion, and adaptive routing |
 | `study.py` | Study Modes, Resources, and Discussion state |
 | `reevaluation.py` | Assessment chains, Gap reconciliation, and atomic derived state rebuilds |
+| `remediation.py` | Optional teaching checkpoints, completed Gap provenance, skipped mini-lessons, and source validation |
 
 The `Repository` class composes the responsibility mixins through their inheritance chain. `issues.py` and `yaml_io.py` provide validation messages and safe YAML persistence.

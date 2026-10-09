@@ -15,6 +15,8 @@ python3 scripts/learning.py resume-session <session-id> --minutes <new-budget>
 
 This starts one new segment. Reuse the saved Study Mode, Resource order, completion statuses, generated Resource IDs/paths, discussion summary, prompt or scenario, and substantive answers; skip completed Resources and steps. Never automatically regenerate saved material. Repeating resume while already active must not add a segment.
 
+For `checkpoint.phase: remediation`, keep `action: practice | review` and resume `../run-remediation/SKILL.md` with the same ID, Gap, source Evidence/Assessment, level, step, and saved mini-lesson. The independent attempt has already been recorded: do not reopen its check or create another Evidence/Assessment. Completed or skipped teaching returns to normal source-action/Session completion using existing Evidence.
+
 For a potentially stale `active` Session with a checkpoint, explain that recovery will close the interrupted segment at `checkpoint.updated_at`, then call:
 
 ```bash

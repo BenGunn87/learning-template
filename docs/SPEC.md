@@ -679,6 +679,15 @@ repository не копируются. Источники, использован
 статьи, записываются в её frontmatter и не смешиваются с external Resource,
 который непосредственно изучал пользователь.
 
+`purpose: study` обозначает обычный учебный материал; отсутствие `purpose` у
+исторического Resource означает то же самое и не требует миграции. Такой
+Resource по-прежнему требует `study` action для своей Unit в Session.
+`purpose: remediation` и `gap: <gap-id>` обозначают мини-урок третьего уровня
+Remediation. Он требует соответствующего source Practice/Review action и ссылки
+из выполняемого, завершённого или пропущенного разбора. Remediation Resources
+не включаются в Study/Evidence Resources. Создание мини-урока сохраняет документ
+и его ссылку в checkpoint; при ошибке записи изменения откатываются.
+
 Generated материал учитывает цель Unit, prerequisites, Context, Diagnostic,
 Progress, Gaps, Interests и глубину изучения. Освоенные prerequisites не
 объясняются повторно без необходимости. Актуальные, быстро меняющиеся или
@@ -987,6 +996,106 @@ append Assessment
 Reevaluation не создаёт Evidence или Session и не увеличивает число attempts,
 Practice или Review.
 
+## Remediation
+
+Remediation — необязательное целевое обучение после Assessment для Practice или
+Review, которая выявила или подтвердила relevant active Gap. Принцип:
+
+```text
+repair now, verify later
+
+Practice / Review → Evidence → Assessment → active Gap
+                                          ↓
+                                  optional Remediation
+                                          ↓
+                                    Session complete
+
+later ordinary Practice / Review → independent Evidence → Assessment
+                                                     ↓
+                                           Gap remains or resolves
+```
+
+AI предлагает разобрать слабость сейчас и семантически выбирает глубину:
+
+1. **Clarification:** локальная ошибка — что неверно, почему, правильная модель.
+2. **Explanation + Example:** неустойчивое понимание — другое объяснение, новый
+   пример и рассуждение с поддержкой.
+3. **Mini-lesson:** фундаментальная слабость — контекст, понятие, объяснение,
+   пример, заблуждение и итог. Мини-урок сохраняется как Generated Resource.
+
+Уровень можно повысить 1 → 2 → 3, если объяснения недостаточно. Выбор уровня,
+примеров и приоритетных Gaps принадлежит AI, а не алгоритму. Предпочтительны
+blocking/prerequisite, confirmed, recurring и непосредственно мешающие Unit
+Gaps. Не требуется разобрать все Gaps до завершения Session. Один Gap допускает
+несколько разборов с разными IDs, включая несколько в одной Session.
+
+Remediation происходит в той же logical Session как post-assessment phase
+исходного action. Допустимые действия плана остаются `study | practice | review`;
+в `ACTION_FOR_EVIDENCE` ничего не добавляется. Source action остаётся
+`in_progress`, хотя его Evidence и Assessment уже записаны. После разбора
+checkpoint возвращается к `stage: assessment`, а caller завершает action или
+начинает разбор другого выбранного Gap.
+
+Допускается упражнение с подсказками, ведущими вопросами и исправлениями.
+Оно не является независимой проверкой и не создаёт Evidence/Assessment,
+не увеличивает attempts, не меняет Progress или Gap. Статус Gap сохраняется:
+`detected → detected`, `confirmed → confirmed`. Remediation не переписывает
+Evidence, Assessment chains, Gap signals/history и не запускает reevaluation.
+Не меняются mastery, latest Evidence/Assessment, Review schedule, routing impact,
+Frontier reasons и blocking behavior. Обычный будущий Practice/Review остаётся
+единственным способом независимо проверить результат обучения; специального
+verification Review, Gap scheduler, статуса ожидания или немедленной
+автоматической переоценки нет.
+
+Completed provenance является append-only `Gap.remediations[]`:
+
+```yaml
+remediations:
+  - id: remediation-quorum-001
+    gap: gap-quorum-application
+    session: 2026-10-09-001
+    unit: practice-quorum
+    source_evidence: 2026-10-09-001-review-001
+    source_assessment: 2026-10-09-001-review-001-assessment-001
+    level: 2
+    focus: Separate quorum intersection from consistency guarantees.
+    misconceptions_addressed: [Intersection alone guarantees consistency.]
+    guided_exercise: true
+    resource: null
+    completed_at: 2026-10-09T10:25:00+05:00
+```
+
+Session хранит лёгкие `remediations[]` ссылки `{gap, remediation}`. Проверяется
+согласованность в обе стороны, существование source Session/Unit/Evidence/
+Assessment, принадлежность Assessment к Evidence и Unit к Evidence, а также
+точный Gap signal с этой парой Evidence/Assessment. Assessment attribution
+остаётся внутри `unit.nodes`. Начать разбор можно только по active Assessment
+tip и active Gap; последующая reevaluation не делает историческую provenance
+невалидной и не заменяет её source Assessment. IDs глобально уникальны.
+
+Во время выполнения или паузы provenance Gap ещё не создаётся. Состояние
+хранится в обычном checkpoint с `action: practice | review`, `phase: remediation`
+и вложенным `remediation` с ID, Gap, source references, level, step, focus,
+misconceptions, guided-exercise flag и nullable Resource `{id, path}`. Pause и
+resume используют существующие segments/checkpoint, продолжают тот же разбор и
+переиспользуют сохранённый мини-урок. Полный transcript не хранится.
+
+`complete-remediation` проверяет состояние и добавляет Gap record/Session
+reference с откатом при ошибке записи. Повторное завершение с тем же ID и
+timestamp не дублирует записи; разные данные не могут переписать завершённый
+разбор. Level 3 требует сохранённого immutable Resource с правильными
+`purpose`, Gap, Session и Unit; его coverage включает Gap node внутри
+`unit.nodes`. Правила обычных Study Resources остаются прежними.
+
+Пользователь может отказаться до начала или пропустить выполняемый разбор.
+`skip-remediation` не создаёт completed provenance в Gap и сохраняет компактную
+запись в `Session.skipped_remediations`, включая ссылку на уже созданный
+мини-урок. Документ остаётся immutable и валидируется через эту связь.
+`complete-session` во время разбора означает такой же явный skip, после чего
+завершает Session с уже созданными Evidence IDs. Желание продолжить позже
+использует pause вместо skip. Формулировка результата: «мы поработали над
+слабостью», а не «пробел проверен и устранён».
+
 ---
 
 # 28. Progress
@@ -1158,11 +1267,14 @@ goal/Context; `minor` остаётся для подходящего момен�
 `important` и `minor` сохраняется через `update-gap-impact`; confirmed prerequisite
 Gap нельзя понизить из `blocking`.
 
-Remediation выбирается отдельно от Gap: Review для забывания освоенного,
+Дальнейшая работа выбирается по Gap: Review для забывания освоенного,
 targeted Practice для application, study Unit для understanding и prerequisite
 Unit для отсутствующих основ. Подходящая существующая Unit предпочтительнее
 новой remedial Unit. Confirmed Gap не обязан становиться следующим действием;
 маршрут не должен состоять только из исправления слабостей.
+
+Немедленная Remediation после Assessment является отдельной необязательной
+фазой текущего Practice/Review; она не добавляет маршрутов или правил planner.
 
 Только `detected` и `confirmed` Gaps участвуют в routing. Rebuild заново определяет
 Gap reasons по текущим активным Gaps и Nodes каждой Frontier Unit, сохраняя
@@ -1287,6 +1399,8 @@ create Evidence
 create Assessment
         ↓
 update Derived State
+        ↓
+optional Remediation after Practice/Review
         ↓
 complete or pause Session
 ```
@@ -1822,6 +1936,11 @@ Web UI не входит в MVP.
 35. Generated Resource является неизменяемым Primary Data.
 36. Discussion не является Evidence или Assessment.
 37. Исторические одиночные `resource` остаются валидными без миграции.
+38. Remediation является обучением в том же Practice/Review action, не Evidence.
+39. Remediation не меняет Progress, Gap status, routing или Review schedule.
+40. Только завершённый разбор добавляет append-only Gap provenance.
+41. Пропущенный мини-урок сохраняется через Session без completed Gap record.
+42. Проверка результата Remediation использует обычный будущий Practice/Review.
 
 ---
 

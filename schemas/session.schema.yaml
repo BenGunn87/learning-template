@@ -70,6 +70,92 @@ properties:
       - $ref: '#/$defs/checkpoint'
   study:
     $ref: '#/$defs/study'
+  remediations:
+    type: array
+    uniqueItems: true
+    items:
+      type: object
+      additionalProperties: false
+      required: [gap, remediation]
+      properties:
+        gap:
+          type: string
+          pattern: ^gap-[a-z0-9]+(?:-[a-z0-9]+)*$
+        remediation:
+          type: string
+          pattern: ^remediation-[a-z0-9]+(?:-[a-z0-9]+)*$
+  skipped_remediations:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - gap
+      - session
+      - unit
+      - source_evidence
+      - source_assessment
+      - level
+      - focus
+      - misconceptions_addressed
+      - guided_exercise
+      - resource
+      - skipped_at
+      properties:
+        id:
+          type: string
+          pattern: ^remediation-[a-z0-9]+(?:-[a-z0-9]+)*$
+        gap:
+          type: string
+          pattern: ^gap-[a-z0-9]+(?:-[a-z0-9]+)*$
+        session:
+          type: string
+          pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{3}$
+        unit:
+          type: string
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+        source_evidence:
+          type: string
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+        source_assessment:
+          type: string
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+        level:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+        focus:
+          type: string
+          minLength: 1
+        misconceptions_addressed:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+        guided_exercise:
+          type: boolean
+        resource:
+          oneOf:
+          - type: 'null'
+          - type: object
+            additionalProperties: false
+            required:
+            - id
+            - path
+            properties:
+              id:
+                type: string
+                pattern: ^resource-[a-z0-9]+(?:-[a-z0-9]+)*$
+              path:
+                type: string
+                pattern: ^resources/generated/resource-[a-z0-9]+(?:-[a-z0-9]+)*\.md$
+        skipped_at:
+          type: string
+          format: date-time
   evidence:
     type: array
     uniqueItems: true
@@ -186,6 +272,70 @@ $defs:
           type: boolean
       resource:
         $ref: '#/$defs/legacy_resource'
+      phase:
+        const: remediation
+      remediation:
+        type: object
+        additionalProperties: false
+        required:
+        - id
+        - gap
+        - source_evidence
+        - source_assessment
+        - level
+        - focus
+        - misconceptions_addressed
+        - guided_exercise
+        - resource
+        - step
+        properties:
+          id:
+            type: string
+            pattern: ^remediation-[a-z0-9]+(?:-[a-z0-9]+)*$
+          gap:
+            type: string
+            pattern: ^gap-[a-z0-9]+(?:-[a-z0-9]+)*$
+          source_evidence:
+            type: string
+            pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+          source_assessment:
+            type: string
+            pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+          level:
+            type: integer
+            enum:
+            - 1
+            - 2
+            - 3
+          focus:
+            type: string
+            minLength: 1
+          misconceptions_addressed:
+            type: array
+            uniqueItems: true
+            items:
+              type: string
+              minLength: 1
+          guided_exercise:
+            type: boolean
+          resource:
+            oneOf:
+            - type: 'null'
+            - type: object
+              additionalProperties: false
+              required:
+              - id
+              - path
+              properties:
+                id:
+                  type: string
+                  pattern: ^resource-[a-z0-9]+(?:-[a-z0-9]+)*$
+                path:
+                  type: string
+                  pattern: ^resources/generated/resource-[a-z0-9]+(?:-[a-z0-9]+)*\.md$
+          step:
+            type: string
+            pattern: ^[a-z0-9]+(?:[_-][a-z0-9]+)*$
       study_mode:
         enum: [external, generated, hybrid]
       resources:

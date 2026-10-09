@@ -10,11 +10,11 @@ from jsonschema.exceptions import SchemaError
 from jsonschema.validators import validator_for
 
 from .issues import Issue
-from .reevaluation import ReevaluationRepositoryMixin
+from .remediation import RemediationRepositoryMixin
 from .yaml_io import YamlFileError, dump_yaml, load_yaml
 
 
-class Repository(ReevaluationRepositoryMixin):
+class Repository(RemediationRepositoryMixin):
     DOCUMENTS = {
         "learning": Path("learning.yaml"),
         "context": Path("config/context.yaml"),
@@ -23,7 +23,7 @@ class Repository(ReevaluationRepositoryMixin):
     }
     SCHEMAS = {
         name: Path("schemas") / f"{name}.schema.yaml"
-        for name in (*DOCUMENTS, "settings", "unit", "session", "evidence", "assessment", "progress", "gap", "interest", "resource")
+        for name in (*DOCUMENTS, "settings", "unit", "session", "evidence", "assessment", "progress", "gap", "interest", "resource", "remediation")
     }
     REQUIRED_DIRECTORIES = (
         "config",

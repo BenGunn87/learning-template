@@ -44,7 +44,15 @@ class StudyRepositoryMixin(RoutingRepositoryMixin):
         issues = [] if body else [Issue(relative, "generated Resource Markdown body must not be empty", "$.body")]
         return metadata, body, issues
 
-    def _validate_generated_document(self, content: str, relative: str) -> list[Issue]:
+    def _generated_session_issues(self, metadata: dict[str, Any], session: dict[str, Any], relative: str) -> list[Issue]:
+        planned = session.get("plan", {}).get("actions", [])
+        if {"type": "study", "unit": metadata.get("unit")} not in planned:
+            return [Issue(relative, "generated Resource Session does not plan its Unit for study", "$.session")]
+        return []
+
+    def _validate_generated_document(
+        self, content: str, relative: str, *, session: dict[str, Any] | None = None,
+    ) -> list[Issue]:
         metadata, _, issues = self._parse_generated_document(content, relative)
         issues.extend(self.validate_schema("resource", metadata, relative))
         if not isinstance(metadata, dict):
@@ -66,12 +74,10 @@ class StudyRepositoryMixin(RoutingRepositoryMixin):
                 issues.append(Issue(relative, f"generated Resource references unknown Session: {session_id}", "$.session"))
             else:
                 try:
-                    session = load_yaml(session_path)
+                    session = session if session is not None else load_yaml(session_path)
                 except YamlFileError:
                     session = None
-                planned = session.get("plan", {}).get("actions", []) if isinstance(session, dict) else []
-                if {"type": "study", "unit": unit_id} not in planned:
-                    issues.append(Issue(relative, "generated Resource Session does not plan its Unit for study", "$.session"))
+                issues.extend(self._generated_session_issues(metadata, session if isinstance(session, dict) else {}, relative))
 
         try:
             graph = self.read("graph")
@@ -149,6 +155,8 @@ class StudyRepositoryMixin(RoutingRepositoryMixin):
             issues.extend(resource_issues)
             if not isinstance(metadata, dict):
                 continue
+            if metadata.get("purpose", "study") != "study":
+                issues.append(Issue(relative, "Study/Evidence resources must have purpose=study", f"{path_prefix}[{index}]"))
             comparisons = {
                 "id": resource.get("id"),
                 "title": resource.get("title"),

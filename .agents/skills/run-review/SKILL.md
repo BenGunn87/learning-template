@@ -12,3 +12,5 @@ Create a compact new check broad enough to reassess recall, understanding, and a
 Checkpoint the Review prompt as soon as it is chosen and update the checkpoint after every substantive answer or stage change. If interrupted, resume the same Review prompt and retained answers. Do not recalculate the due date or create Review Evidence until the check is complete.
 
 After the user's answer, ask for concise takeaways and create `Evidence(type=review)` with `based_on.previous_evidence`, `prompt`, and `answer`. Preserve which parts of the check tested each mastery dimension and lowest Graph Node so `assess-answer` can populate `Assessment.evaluated` without broad attribution. Do not choose an interval. Return control to `run-session`: `assess-answer` derives `review_outcome`, and `update-progress` calculates the next date from config.
+
+Leave the source action `in_progress` for Assessment and the caller's optional Remediation. If the saved phase is already `remediation`, route to `../run-remediation/SKILL.md` instead of repeating the Review. Teaching does not alter the recorded Review result or its next date.

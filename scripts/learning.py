@@ -37,7 +37,7 @@ def parser() -> argparse.ArgumentParser:
     validate.add_argument(
         "target",
         nargs="?",
-        choices=("repository", "learning", "context", "graph", "frontier", "settings", "unit", "session", "evidence", "assessment", "progress", "gap", "interest", "resource"),
+        choices=("repository", "learning", "context", "graph", "frontier", "settings", "unit", "session", "evidence", "assessment", "progress", "gap", "interest", "resource", "remediation"),
         default="repository",
     )
     validate.add_argument("identifier", nargs="?", help="id required for entity-specific validation targets")
@@ -117,6 +117,18 @@ def parser() -> argparse.ArgumentParser:
     active_assessment.add_argument("evidence_id")
     list_gaps = subcommands.add_parser("list-gaps", help="list persistent learning Gaps")
     list_gaps.add_argument("--status", choices=("detected", "confirmed", "resolved", "invalidated"))
+    start_remediation = subcommands.add_parser("start-remediation", help="start optional teaching after a Practice/Review Assessment")
+    start_remediation.add_argument("input", type=Path, help="Remediation YAML with source references and semantic teaching choices")
+    start_remediation.add_argument("--started-at", help="RFC 3339 timestamp")
+    complete_remediation = subcommands.add_parser("complete-remediation", help="append completed teaching provenance without changing mastery")
+    complete_remediation.add_argument("remediation_id")
+    complete_remediation.add_argument("--completed-at", help="RFC 3339 timestamp")
+    skip_remediation = subcommands.add_parser("skip-remediation", help="skip current teaching, preserving any saved mini-lesson in the Session")
+    skip_remediation.add_argument("session_id")
+    skip_remediation.add_argument("--skipped-at", help="RFC 3339 timestamp")
+    list_remediations = subcommands.add_parser("list-remediations", help="read in-progress, completed, and skipped teaching state")
+    list_remediations.add_argument("--session", dest="session_id")
+    list_remediations.add_argument("--gap", dest="gap_id")
     create_gap = subcommands.add_parser("create-gap", help="create a semantically reviewed Gap")
     create_gap.add_argument("input", type=Path, help="Gap YAML document")
     gap_impact = subcommands.add_parser("update-gap-impact", help="set semantic Gap routing priority within prerequisite constraints")
@@ -281,6 +293,21 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "list-gaps":
             print(dump_yaml({"gaps": repository.list_gaps(args.status)}), end="")
             return 0
+        if args.command == "start-remediation":
+            path, data, outcome = repository.start_remediation(load_yaml(args.input), args.started_at)
+            print(dump_yaml({outcome: str(path.relative_to(repository.root)), "session": data}), end="")
+            return 0
+        if args.command == "complete-remediation":
+            path, data, outcome = repository.complete_remediation(args.remediation_id, args.completed_at)
+            print(dump_yaml({outcome: str(path.relative_to(repository.root)), "session": data}), end="")
+            return 0
+        if args.command == "skip-remediation":
+            path, data, outcome = repository.skip_remediation(args.session_id, args.skipped_at)
+            print(dump_yaml({outcome: str(path.relative_to(repository.root)), "session": data}), end="")
+            return 0
+        if args.command == "list-remediations":
+            print(dump_yaml({"remediations": repository.list_remediations(args.session_id, args.gap_id)}), end="")
+            return 0
         if args.command == "create-gap":
             path, outcome = repository.create_gap(load_yaml(args.input))
             print(dump_yaml({outcome: str(path.relative_to(repository.root))}), end="")
@@ -369,6 +396,10 @@ def main(argv: list[str] | None = None) -> int:
             if not args.identifier:
                 raise ValueError("Resource validation requires an id")
             issues = repository.validate_generated_resource(args.identifier)
+        elif args.target == "remediation":
+            if not args.identifier:
+                raise ValueError("Remediation validation requires an id")
+            issues = repository.validate_remediation(args.identifier)
         elif args.target == "settings":
             if args.identifier:
                 raise ValueError("Settings validation does not accept an identifier")

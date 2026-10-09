@@ -16,3 +16,5 @@ python3 scripts/learning.py pause-session <session-id> --checkpoint <checkpoint.
 This atomically timestamps the checkpoint, closes the open segment, and sets Session status to `paused`. Do not create Evidence or Assessment for an unfinished check, update Progress, lower mastery, or mark the Unit paused. A repeated pause is a no-op.
 
 If no action has started, complete the Session without Evidence instead of pausing it. Report the persisted Unit, stage, completed steps, and the next safe continuation point.
+
+During Remediation, preserve the source `action: practice | review`, Unit, `phase: remediation`, and nested teaching ID, Gap, source Evidence/Assessment, level, step, focus, flags, and Resource ID/path. Pause keeps already-created Evidence/Assessment and writes no completed Gap remediation provenance. Use the saved checkpoint unchanged when no new teaching state needs saving. A request to finish the Session instead skips teaching through `complete-session`; it is not a pause.

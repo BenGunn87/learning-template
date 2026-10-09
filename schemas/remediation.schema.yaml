@@ -1,0 +1,68 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: remediation.schema.yaml
+title: Post-assessment remediation state or provenance
+type: object
+additionalProperties: false
+required: [id, gap, session, unit, source_evidence, source_assessment, level, focus, misconceptions_addressed, guided_exercise, resource]
+properties:
+  id:
+    type: string
+    pattern: ^remediation-[a-z0-9]+(?:-[a-z0-9]+)*$
+  gap:
+    type: string
+    pattern: ^gap-[a-z0-9]+(?:-[a-z0-9]+)*$
+  session:
+    type: string
+    pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{3}$
+  unit:
+    type: string
+    pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  source_evidence:
+    type: string
+    pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  source_assessment:
+    type: string
+    pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+  level:
+    type: integer
+    enum: [1, 2, 3]
+  focus: {type: string, minLength: 1}
+  misconceptions_addressed:
+    type: array
+    uniqueItems: true
+    items: {type: string, minLength: 1}
+  guided_exercise: {type: boolean}
+  resource:
+    oneOf:
+      - type: 'null'
+      - type: object
+        additionalProperties: false
+        required: [id, path]
+        properties:
+          id:
+            type: string
+            pattern: ^resource-[a-z0-9]+(?:-[a-z0-9]+)*$
+          path:
+            type: string
+            pattern: ^resources/generated/resource-[a-z0-9]+(?:-[a-z0-9]+)*\.md$
+  step:
+    type: string
+    pattern: ^[a-z0-9]+(?:[_-][a-z0-9]+)*$
+  completed_at: {type: string, format: date-time}
+  skipped_at: {type: string, format: date-time}
+oneOf:
+  - required: [step]
+    not:
+      anyOf:
+        - required: [completed_at]
+        - required: [skipped_at]
+  - required: [completed_at]
+    not:
+      anyOf:
+        - required: [step]
+        - required: [skipped_at]
+  - required: [skipped_at]
+    not:
+      anyOf:
+        - required: [step]
+        - required: [completed_at]
