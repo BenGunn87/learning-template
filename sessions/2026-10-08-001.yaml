@@ -2,7 +2,7 @@ format_version: 1
 id: 2026-10-08-001
 started_at: '2026-10-08T10:42:37+05:00'
 time_budget_minutes: 30
-status: paused
+status: completed
 plan:
   unit: replicate-data-across-nodes
   actions:
@@ -11,57 +11,35 @@ plan:
   - type: practice
     unit: choose-storage-and-indexes
 actual:
-  unit: choose-storage-and-indexes
+  unit: replicate-data-across-nodes
   actions:
   - type: review
     unit: replicate-data-across-nodes
     status: completed
   - type: practice
     unit: choose-storage-and-indexes
-    status: in_progress
+    status: completed
 segments:
 - started_at: '2026-10-08T10:42:37+05:00'
   ended_at: '2026-10-08T11:40:20+05:00'
   budget_minutes: 30
   end_reason: paused
+- started_at: '2026-10-09T13:47:50+05:00'
+  ended_at: '2026-10-09T16:22:49+05:00'
+  budget_minutes: 30
+  end_reason: completed
 checkpoint:
   unit: choose-storage-and-indexes
   action: practice
-  stage: prompt_shown
+  stage: assessment
   completed_steps:
-    prompt_shown: true
-    answer_completed: false
-    takeaways_completed: false
-  interaction:
-    prompt: 'Сервис промокодов маркетплейса. Кампания (campaign_id, starts_at, ends_at,
-      total_limit) содержит промокоды (code — строка, campaign_id, per_user_limit
-      = 1). Активация: пользователь вводит code при оформлении заказа.
-
-      Требования:
-
-      - проверить код и активировать: общее число активаций кампании не больше total_limit,
-      один пользователь не может активировать код дважды, даже при двойном клике/повторе
-      запроса;
-
-      - «Мои промокоды»: активации пользователя, новые сверху;
-
-      - отчёт маркетинга: активации кампании за период по дням;
-
-      - найти и отменить активацию по order_id при отмене заказа (лимит возвращается).
-
-      Масштаб: 50 млн активаций в год, обычно 200 активаций/с, но при старте популярной
-      кампании — до 5 000 активаций/с на один код в первые минуты.
-
-      Нужно: (1) выбрать хранилище и обосновать от паттернов доступа и инвариантов,
-      назвать отвергнутую альтернативу; (2) таблицы/ключи и минимальный набор индексов
-      — для каждого индекса назови запрос, который он обслуживает, и порядок полей;
-      (3) механизм соблюдения total_limit и однократности при параллельных запросах
-      — конкретно, на уровне БД; (4) цена решения и что произойдёт при пике 5 000/с
-      на один код; (5) измеримый сигнал, при котором ты пересмотришь решение.
-
-      '
-  note: Target application — concurrency guarantee at DB level, minimal index set
-    justified per query, storage choice from access patterns, hot-row cost.
-  updated_at: '2026-10-08T11:40:20+05:00'
-evidence: []
-completed_at: null
+    evidence_created: true
+    assessment_created: true
+  updated_at: '2026-10-09T16:22:49+05:00'
+evidence:
+- 2026-10-08-001-review-001
+- 2026-10-08-001-practice-001
+completed_at: '2026-10-09T16:22:49+05:00'
+remediations:
+- gap: gap-transactions-application-001
+  remediation: remediation-2026-10-08-001-transactions-hot-row

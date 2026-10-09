@@ -14,14 +14,14 @@ choose-consistency-under-failures:
     repetitions: 0
 choose-storage-and-indexes:
   status: practice
-  attempts: 3
+  attempts: 4
   mastery:
     recall: hard
     understanding: hard
     application: hard
-  latest_evidence: 2026-09-28-001-review-001
-  latest_assessment: 2026-09-28-001-review-001-assessment-001
-  last_attempt: '2026-09-28T14:30:06+05:00'
+  latest_evidence: 2026-10-08-001-practice-001
+  latest_assessment: 2026-10-08-001-practice-001-assessment-001
+  last_attempt: '2026-10-09T15:41:14+05:00'
   review:
     last: '2026-09-28'
     due: '2026-10-03'
@@ -87,16 +87,17 @@ model-data-and-access-patterns:
     interval_days: 6
     repetitions: 1
 replicate-data-across-nodes:
-  status: verified
-  attempts: 1
+  status: practice
+  attempts: 2
   mastery:
     recall: good
     understanding: good
-    application: good
-  latest_evidence: 2026-09-29-001-initial-001
-  latest_assessment: 2026-09-29-001-initial-001-assessment-001
-  last_attempt: '2026-09-30T16:20:00+05:00'
+    application: hard
+  latest_evidence: 2026-10-08-001-review-001
+  latest_assessment: 2026-10-08-001-review-001-assessment-001
+  last_attempt: '2026-10-08T11:25:00+05:00'
   review:
-    due: '2026-10-07'
-    interval_days: 7
-    repetitions: 0
+    last: '2026-10-08'
+    due: '2026-10-19'
+    interval_days: 11
+    repetitions: 1

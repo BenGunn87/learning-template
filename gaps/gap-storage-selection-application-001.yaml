@@ -3,12 +3,17 @@ id: gap-storage-selection-application-001
 created_at: '2026-09-28T14:30:35+05:00'
 node: storage-selection
 dimension: application
-status: detected
+status: confirmed
 scope: local
-routing_impact: important
+routing_impact: blocking
 signals:
 - evidence: 2026-09-28-001-review-001
   assessment: 2026-09-28-001-review-001-assessment-001
+  result: hard
+  observed_nodes:
+  - storage-selection
+- evidence: 2026-10-08-001-practice-001
+  assessment: 2026-10-08-001-practice-001-assessment-001
   result: hard
   observed_nodes:
   - storage-selection
@@ -16,4 +21,7 @@ history:
 - status: detected
   at: '2026-09-28T14:30:35+05:00'
   evidence: 2026-09-28-001-review-001
+- status: confirmed
+  at: '2026-10-09T15:41:27+05:00'
+  evidence: 2026-10-08-001-practice-001
 resolved_at: null
