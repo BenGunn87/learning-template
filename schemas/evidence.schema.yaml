@@ -156,6 +156,17 @@ $defs:
         dimension:
           enum: [recall, understanding, application]
         allowed: {type: boolean}
+        used:
+          type: boolean
+          description: Actual consultation during this independent part. May be absent only in historical Evidence; new writes require it.
+      allOf:
+        - if:
+            properties:
+              allowed: {const: false}
+            required: [allowed]
+          then:
+            properties:
+              used: {const: false}
   external_resource:
     type: object
     additionalProperties: false

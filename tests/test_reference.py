@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import sys
 import tempfile
 import unittest
@@ -222,14 +223,18 @@ class ReferenceLearningTest(unittest.TestCase):
         self.repository.update_reference("reference/index.md", "# Reference\n\n[Storage](storage.md)\n", "# Reference\n")
         self.assertEqual(before, self.snapshot())
 
-    def test_permission_only_evidence_mixed_modes_and_overrides(self) -> None:
+    def test_reference_usage_mixed_modes_and_overrides(self) -> None:
         for permissions in (
-            [{"dimension": "recall", "allowed": False}],
-            [{"dimension": "application", "allowed": True}],
-            [{"dimension": "understanding", "allowed": True}],
-            [{"dimension": "application", "allowed": False}],
-            [{"dimension": "recall", "allowed": False}, {"dimension": "understanding", "allowed": False},
-             {"dimension": "application", "allowed": True}],
+            [{"dimension": "recall", "allowed": False, "used": False}],
+            [{"dimension": "understanding", "allowed": False, "used": False}],
+            [{"dimension": "application", "allowed": True, "used": True}],
+            [{"dimension": "application", "allowed": True, "used": False}],
+            [{"dimension": "recall", "allowed": True, "used": True}],
+            [{"dimension": "understanding", "allowed": True, "used": False}],
+            [{"dimension": "application", "allowed": False, "used": False}],
+            [{"dimension": "recall", "allowed": False, "used": False},
+             {"dimension": "understanding", "allowed": False, "used": False},
+             {"dimension": "application", "allowed": True, "used": True}],
         ):
             with self.subTest(permissions=permissions):
                 evidence = self.fixture.evidence(self.session_id)
@@ -253,13 +258,67 @@ class ReferenceLearningTest(unittest.TestCase):
         self.assertEqual(before, path.read_bytes())
         self.assertNotIn("reference", load_yaml(path))
 
+    def test_historical_permission_only_evidence_is_valid_and_not_rewritten(self) -> None:
+        evidence = self.fixture.evidence(self.session_id)
+        evidence["reference"] = [{"dimension": "recall", "allowed": False}, {"dimension": "application", "allowed": True}]
+        path = self.repository.path(f"evidence/{evidence['unit']}/{evidence['id']}.yaml")
+        # Model a record saved by the previous version, bypassing new-write rules.
+        cycle.write_yaml(path, evidence)
+        before = path.read_bytes()
+        self.assertEqual([], self.repository.validate_evidence(evidence["id"]))
+        self.repository.create_assessment(self.fixture.assessment())
+        self.repository.rebuild_progress()
+        self.repository.rebuild_frontier()
+        self.assertEqual([], self.repository.validate_repository())
+        self.assertEqual(before, path.read_bytes())
+        self.assertTrue(all("used" not in entry for entry in load_yaml(path)["reference"]))
+
+    def test_new_evidence_requires_usage_for_each_reference_dimension(self) -> None:
+        for policies in (
+            [{"dimension": "recall", "allowed": False}],
+            [{"dimension": "application", "allowed": True}],
+            [{"dimension": "recall", "allowed": False, "used": False}, {"dimension": "application", "allowed": True}],
+        ):
+            with self.subTest(policies=policies):
+                evidence = self.fixture.evidence(self.session_id)
+                evidence["reference"] = policies
+                with self.assertRaisesRegex(ValueError, "requires used for every dimension"):
+                    self.repository.create_evidence(evidence)
+        self.assertFalse(list(self.repository.path("evidence").rglob("*.yaml")))
+
+    def test_schema_rejects_closed_reference_usage(self) -> None:
+        for dimension in ("recall", "understanding", "application"):
+            with self.subTest(dimension=dimension):
+                evidence = self.fixture.evidence(self.session_id)
+                evidence["reference"] = [{"dimension": dimension, "allowed": False, "used": True}]
+                issues = self.repository.validate_evidence(evidence, f"evidence/{evidence['unit']}/{evidence['id']}.yaml")
+                self.assertTrue(any(issue.path == "$.reference[0].used" for issue in issues), issues)
+                with self.assertRaises(ValueError):
+                    self.repository.create_evidence(evidence)
+
+    def test_cli_records_open_used_and_unused_as_distinct_values(self) -> None:
+        for used in (False, True):
+            evidence = self.fixture.evidence(self.session_id)
+            evidence["id"] += "-used" if used else "-unused"
+            evidence["reference"] = [{"dimension": "application", "allowed": True, "used": used}]
+            staging = self.root / "evidence-input.yaml"
+            cycle.write_yaml(staging, evidence)
+            with redirect_stdout(StringIO()):
+                self.assertEqual(0, learning_main(["--root", str(self.root), "create-evidence", str(staging)]))
+            path = self.repository.path(f"evidence/{evidence['unit']}/{evidence['id']}.yaml")
+            self.assertIs(used, load_yaml(path)["reference"][0]["used"])
+
     def test_invalid_permissions_are_rejected(self) -> None:
         for permissions in (
             [], True, [{"dimension": "recall", "allowed": "false"}],
             [{"dimension": "other", "allowed": True}], [{"dimension": "recall"}],
-            [{"dimension": "recall", "allowed": False, "used": False}],
-            [{"dimension": "application", "allowed": True, "files": ["reference/storage.md"]}],
-            [{"dimension": "recall", "allowed": False}, {"dimension": "recall", "allowed": True}],
+            [{"dimension": "recall", "allowed": False, "used": True}],
+            [{"dimension": "understanding", "allowed": False, "used": True}],
+            [{"dimension": "application", "allowed": True, "used": "true"}],
+            [{"dimension": "application", "allowed": True, "used": None}],
+            [{"dimension": "application", "allowed": True, "used": 1}],
+            [{"dimension": "application", "allowed": True, "used": True, "files": ["reference/storage.md"]}],
+            [{"dimension": "recall", "allowed": False, "used": False}, {"dimension": "recall", "allowed": True, "used": True}],
         ):
             with self.subTest(permissions=permissions):
                 evidence = self.fixture.evidence(self.session_id)
@@ -279,7 +338,7 @@ class ReferenceLearningTest(unittest.TestCase):
         common.update(session=session["id"], created_at="2026-09-15T10:20:00+05:00")
         practice = {**common, "id": "practice-check", "type": "practice", "target": {"dimension": "application"},
                     "based_on": {"evidence": source["id"]}, "practice": {"prompt": "New case", "answer": "New answer"},
-                    "reference": [{"dimension": "application", "allowed": True}]}
+                    "reference": [{"dimension": "application", "allowed": True, "used": False}]}
         path = self.repository.create_evidence(practice)
         self.assertEqual(practice["reference"], load_yaml(path)["reference"])
         assessment = {**self.fixture.assessment(practice["id"]), "type": "practice",
@@ -292,11 +351,24 @@ class ReferenceLearningTest(unittest.TestCase):
         common.update(session=session["id"], created_at="2026-09-30T10:20:00+05:00")
         review = {**common, "id": "review-check", "type": "review", "based_on": {"previous_evidence": practice["id"]},
                   "prompt": "Recall then apply", "answer": "Response",
-                  "reference": [{"dimension": "recall", "allowed": False}, {"dimension": "application", "allowed": True}]}
+                  "reference": [{"dimension": "recall", "allowed": False, "used": False},
+                                {"dimension": "application", "allowed": True, "used": True}]}
         path = self.repository.create_evidence(review)
         self.assertEqual(review["reference"], load_yaml(path)["reference"])
 
     def test_permissions_survive_pause_resume_and_recovery(self) -> None:
+        policy = [{"dimension": "recall", "allowed": False, "used": False},
+                  {"dimension": "application", "allowed": True, "used": True}]
+        checkpoint = {"unit": "define-requirements", "action": "study", "stage": "recall",
+                      "completed_steps": {}, "reference": policy}
+        self.repository.update_checkpoint(self.session_id, checkpoint, "2026-09-14T10:05:00+05:00")
+        self.repository.pause_session(self.session_id, paused_at="2026-09-14T10:06:00+05:00")
+        _, resumed, _ = self.repository.resume_session(self.session_id, 20, "2026-09-14T11:00:00+05:00")
+        self.assertEqual(policy, resumed["checkpoint"]["reference"])
+        _, recovered, _ = self.repository.recover_session(self.session_id, 20, "2026-09-14T12:00:00+05:00")
+        self.assertEqual(policy, recovered["checkpoint"]["reference"])
+
+    def test_legacy_checkpoint_keeps_usage_unknown_on_resume_and_recovery(self) -> None:
         policy = [{"dimension": "recall", "allowed": False}, {"dimension": "application", "allowed": True}]
         checkpoint = {"unit": "define-requirements", "action": "study", "stage": "recall",
                       "completed_steps": {}, "reference": policy}
@@ -306,6 +378,21 @@ class ReferenceLearningTest(unittest.TestCase):
         self.assertEqual(policy, resumed["checkpoint"]["reference"])
         _, recovered, _ = self.repository.recover_session(self.session_id, 20, "2026-09-14T12:00:00+05:00")
         self.assertEqual(policy, recovered["checkpoint"]["reference"])
+        self.assertTrue(all("used" not in entry for entry in recovered["checkpoint"]["reference"]))
+
+    def test_invalid_checkpoint_usage_is_rejected_atomically(self) -> None:
+        path = self.repository.path(f"sessions/{self.session_id}.yaml")
+        before = path.read_bytes()
+        for policy in (
+            {"dimension": "recall", "allowed": False, "used": True},
+            {"dimension": "application", "allowed": True, "used": "true"},
+        ):
+            with self.subTest(policy=policy):
+                checkpoint = {"unit": "define-requirements", "action": "study", "stage": "recall",
+                              "completed_steps": {}, "reference": [policy]}
+                with self.assertRaises(ValueError):
+                    self.repository.update_checkpoint(self.session_id, checkpoint, "2026-09-14T10:05:00+05:00")
+                self.assertEqual(before, path.read_bytes())
 
     def test_conflicting_checkpoint_policy_is_rejected_atomically(self) -> None:
         path = self.repository.path(f"sessions/{self.session_id}.yaml")
@@ -330,12 +417,47 @@ class ReferenceLearningTest(unittest.TestCase):
 
     def test_reference_permission_does_not_change_progress_scores(self) -> None:
         evidence = self.fixture.evidence(self.session_id)
-        evidence["reference"] = [{"dimension": "application", "allowed": True}]
+        evidence["reference"] = [{"dimension": "application", "allowed": True, "used": True}]
         self.repository.create_evidence(evidence)
         self.repository.create_assessment(self.fixture.assessment())
         self.repository.rebuild_progress()
         progress = load_yaml(self.repository.path("progress/units.yaml"))
         self.assertEqual(self.fixture.assessment()["result"], progress["define-requirements"]["mastery"])
+
+    def test_usage_alone_does_not_change_learning_state_or_planning(self) -> None:
+        for grade in ("hard", "good"):
+            results = []
+            for used in (False, True):
+                with tempfile.TemporaryDirectory() as directory:
+                    clone = Path(directory) / "repository"
+                    shutil.copytree(self.root, clone)
+                    repository = Repository(clone)
+                    evidence = self.fixture.evidence(self.session_id)
+                    evidence["reference"] = [{"dimension": "application", "allowed": True, "used": used}]
+                    repository.create_evidence(evidence)
+                    assessment = self.fixture.assessment()
+                    assessment["result"]["application"] = grade
+                    assessment["evaluated"] = {"application": {"nodes": ["requirements"]}}
+                    repository.create_assessment(assessment)
+                    repository.rebuild_progress()
+                    repository.rebuild_frontier()
+                    results.append({
+                        "progress": repository.read_progress(),
+                        "gaps": repository.list_gaps(),
+                        "frontier": repository.read("frontier"),
+                        "practice": repository.get_practice_units(),
+                        "reviews": repository.get_due_reviews("2026-09-30"),
+                        "planning": repository.plan_session_candidates(25, "2026-09-30"),
+                    })
+            with self.subTest(grade=grade):
+                self.assertEqual(results[0], results[1])
+                progress = results[0]["progress"]["define-requirements"]
+                self.assertEqual(1, progress["attempts"])
+                if grade == "hard":
+                    self.assertTrue(results[0]["gaps"])
+                    self.assertTrue(results[0]["practice"])
+                else:
+                    self.assertTrue(results[0]["reviews"])
 
 
 if __name__ == "__main__":

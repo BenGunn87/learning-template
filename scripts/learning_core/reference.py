@@ -13,7 +13,17 @@ from .yaml_io import YamlFileError, create_text
 
 
 class ReferenceRepositoryMixin(RemediationRepositoryMixin):
-    """Manage files only; Markdown meaning and index editing belong to the AI."""
+    """Manage opaque files and new Reference metadata; Markdown meaning belongs to AI."""
+
+    def create_evidence(self, data: Any) -> Path:
+        # Reading historical permission-only metadata remains valid. New writes
+        # must explicitly distinguish permission from actual consultation.
+        policies = data.get("reference") if isinstance(data, dict) else None
+        if isinstance(policies, list):
+            for policy in policies:
+                if isinstance(policy, dict) and "used" not in policy:
+                    raise ValueError("new Evidence Reference metadata requires used for every dimension")
+        return super().create_evidence(data)
 
     def _reference_path(self, relative: str) -> Path:
         if not isinstance(relative, str) or "\\" in relative or any(ord(c) < 32 for c in relative):

@@ -219,6 +219,17 @@ $defs:
         dimension:
           enum: [recall, understanding, application]
         allowed: {type: boolean}
+        used:
+          type: boolean
+          description: Consultation observed so far. Absence means unknown, including in historical checkpoints.
+      allOf:
+        - if:
+            properties:
+              allowed: {const: false}
+            required: [allowed]
+          then:
+            properties:
+              used: {const: false}
   planned_action:
     type: object
     additionalProperties: false

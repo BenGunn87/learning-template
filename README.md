@@ -140,20 +140,33 @@ existing repositories and Evidence need no migration.
 Reference is freely available during Study, Discussion, and Remediation. Independent
 checks announce their policy: recall and understanding default to closed Reference,
 application to open Reference, with explicit task-specific overrides. Mixed checks
-separate their parts. Checkpoints and Evidence record only permission per dimension:
+separate their parts. Checkpoints and Evidence record permission and consultation
+per dimension:
 
 ```yaml
 reference:
   - dimension: recall
     allowed: false
+    used: false
   - dimension: application
     allowed: true
+    used: true
 ```
 
-Actual use and file provenance are not tracked; the learner is trusted. Permissions
-provide Assessment context without automatically changing grades. Historical Evidence
-without this optional field has unspecified conditions. Reference editing after
-Remediation still requires later independent verification of the Gap.
+`allowed` records permission; `used` records actual consultation during that
+independent part. An explicit learner statement or opening/showing Reference to
+the learner during the allowed task counts as use. Availability alone does not;
+with no indication of consultation in a new task, record false. One short question
+before Evidence is acceptable if usage is genuinely ambiguous; repeated interruptions
+are unnecessary. `used: true` requires `allowed: true`. File provenance and hashes
+are not collected. Both fields provide Assessment context without automatically
+changing grades.
+
+New Evidence Reference entries require `used`. Historical permission-only records
+remain valid and unchanged; missing usage is unknown, not false. Checkpoints may
+omit `used` while unknown and retain known values on resume. Historical Evidence
+without Reference has unspecified conditions. The learner is trusted. Reference
+editing after Remediation still requires later independent verification of the Gap.
 
 ## Tests
 
@@ -177,6 +190,6 @@ See `docs/SPEC.md` for the architecture and product requirements.
 | `study.py` | Study Modes, Resources, and Discussion state |
 | `reevaluation.py` | Assessment chains, Gap reconciliation, and atomic derived state rebuilds |
 | `remediation.py` | Optional teaching checkpoints, completed Gap provenance, skipped mini-lessons, and source validation |
-| `reference.py` | Opaque editable course Markdown, safe file operations, and Reference permission validation |
+| `reference.py` | Opaque editable course Markdown, safe file operations, and Reference permission/use validation |
 
 The `Repository` class composes the responsibility mixins through their inheritance chain. `issues.py` and `yaml_io.py` provide validation messages and safe YAML persistence.
