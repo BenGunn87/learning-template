@@ -139,6 +139,9 @@ class LearningCycleRepositoryMixin:
             return issues
 
         session_id = session.get("id")
+        checkpoint = session.get("checkpoint")
+        if isinstance(checkpoint, dict) and "reference" in checkpoint:
+            issues.extend(self.validate_reference_permissions(checkpoint["reference"], relative, "$.checkpoint.reference"))
         if isinstance(session_id, str) and relative.startswith("sessions/") and Path(relative).name != f"{session_id}.yaml":
             issues.append(Issue(relative, "file name must match Session id"))
         planned = session.get("plan", {}).get("unit") if isinstance(session.get("plan"), dict) else None
@@ -167,6 +170,8 @@ class LearningCycleRepositoryMixin:
             return issues
 
         evidence_id = evidence.get("id")
+        if "reference" in evidence:
+            issues.extend(self.validate_reference_permissions(evidence["reference"], relative, "$.reference"))
         unit_id = evidence.get("unit")
         session_id = evidence.get("session")
         expected = Path("evidence") / str(unit_id) / f"{evidence_id}.yaml"

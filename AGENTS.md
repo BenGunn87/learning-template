@@ -6,7 +6,7 @@ This repository is a Git-based learning system for one large topic. Any AI agent
 
 - The repository is the source of truth. Chat memory is never state: re-read files and run `python3 scripts/learning.py state` / `detect-resumable-session` instead of relying on earlier conversation.
 - The agent makes semantic decisions (onboarding, diagnostic, Knowledge Graph, Units, materials, questions, Assessments, Gaps, routing suggestions).
-- Scripts own deterministic state. Never hand-compute or hand-edit what `scripts/learning.py` can compute: validation, prerequisites, Session state, Review intervals, Progress, Frontier, indexes. Write Primary Data only through its `create-*` / `update-*` commands.
+- Scripts own deterministic state. Never hand-compute or hand-edit what `scripts/learning.py` can compute: validation, prerequisites, Session state, Review intervals, Progress, Frontier, derived indexes. Write Primary Data only through its `create-*` / `update-*` commands. Reference Markdown and its human-readable index are authored semantically by AI and persisted through Reference commands; the user may edit them directly.
 - Evidence and generated Resources are immutable. Assessments are append-only; revise one only with `reevaluate-assessment`. Progress and Frontier are derived and are rebuilt, not edited.
 - At most one Session may be `active` or `paused`. Pausing never changes Unit mastery.
 - Load only the local context a step needs; do not read the whole history by default.
@@ -23,6 +23,7 @@ Skills live in `.agents/skills/<name>/SKILL.md` (Claude Code sees the same files
 | Returns to a paused or interrupted Session | `resume-session` |
 | Asks about progress or status | `status` |
 | Mentions a topic to study later or deeper | `capture-interest` |
+| Wants to show, find, add, or update reusable knowledge in the course Reference | `manage-reference` |
 
 The other Skills (`diagnostic`, `build-learning-map`, `build-frontier`, `initialize-unit`, `run-study`, `find-resources`, `run-practice`, `run-review`, `assess-answer`, `run-remediation`) are loaded by these entry points; follow their references rather than skipping steps.
 

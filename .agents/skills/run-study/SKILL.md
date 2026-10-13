@@ -25,10 +25,14 @@ Discussion is supported Study, not Evidence. It must not update Progress, create
 
 Clearly announce the transition to independent verification, then:
 
-1. Ask a small set of questions that test recall and understanding without consulting the Resources. Require answers in the user's own words.
-2. Give one compact scenario or exercise aligned with the Unit practice goal. Use examples different from the generated article and prefer a decision and trade-off explanation over a factual quiz.
+1. Ask a small set of questions that test recall and understanding without consulting the Resources. Explicitly announce that Reference is closed for these dimensions by default. Require answers in the user's own words.
+2. Give one compact scenario or exercise aligned with the Unit practice goal. Explicitly announce that Reference is allowed for application by default. Use examples different from the generated article and prefer a decision and trade-off explanation over a factual quiz.
 3. Ask the user for two to four concise Takeaways in their own words. Do not write Takeaways for them. Point out a material error and let the user correct it when needed.
 
 Keep the exact prompts, the substance of every user answer, and the ordered actually studied Resources available for Evidence. Retain enough specificity to tell which lowest Graph Nodes each recall, understanding, or application check actually tested; `assess-answer` records that mapping in `Assessment.evaluated`. Record factual observations separately. Do not assess mastery, update Progress, or complete the Session in this skill.
 
 If interrupted before the whole check is complete, leave the interaction only in the checkpoint; it is not Evidence. Follow `../pause-session/SKILL.md` when the user asks to stop.
+
+Reference may be freely consulted during Study and Discussion. Before each independent part, choose and announce its Reference policy; defaults above may be explicitly overridden for a particular task. Separate mixed-policy parts. Save `reference: [{dimension: ..., allowed: ...}]` for checked dimensions in the checkpoint and retain it for Evidence; on resume use the saved policy. Trust the learner without asking about actual use or recording files.
+
+When reusable knowledge is worth preserving, you may offer a concise Reference addition or correction; do not force a suggestion after every activity. Follow `../manage-reference/SKILL.md` for a user-requested or explicitly confirmed edit. A proposal alone must not create or modify Reference, and an edit never counts as independent Evidence.

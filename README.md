@@ -108,6 +108,53 @@ Level 3 uses `create-generated-resource` with ordinary frontmatter plus `purpose
 
 Completion appends `Gap.remediations[]` and lightweight `Session.remediations[]` references, then returns to the source Assessment checkpoint. It is idempotent and leaves the action unfinished so another selected Gap can be taught before normal action/Session completion. Skipping records only `Session.skipped_remediations`; any saved mini-lesson remains valid through that reference. `complete-session` during teaching performs this skip and requires the already-created source Evidence. None of these operations rebuilds Progress or Frontier. Multi-file writes roll back on ordinary write errors; an abrupt process termination between file writes can still require repository repair.
 
+## Course Reference
+
+Ask the agent to show or update reusable knowledge, for example “Покажи справочник”
+or “Добавь это определение в Reference”. The `manage-reference` Skill maintains
+concise, editable Markdown in optional `reference/index.md` and thematic files.
+It inspects existing content before adding or updating, and keeps the index useful.
+An explicit user request authorizes the edit; an AI suggestion waits for explicit
+confirmation and creates no files by itself. The user may also edit Markdown directly.
+Reference is Primary Data with Git history; edits never change learning progress,
+Gaps, attempts, Sessions, or Review dates. Generated Resources remain immutable.
+
+```bash
+python3 scripts/learning.py ensure-reference
+python3 scripts/learning.py list-reference
+python3 scripts/learning.py read-reference
+python3 scripts/learning.py create-reference reference/<topic>.md <content.md>
+python3 scripts/learning.py read-reference reference/<topic>.md > <previous.md>
+python3 scripts/learning.py update-reference reference/<topic>.md <replacement.md> --expected <previous.md>
+python3 scripts/learning.py validate reference
+```
+
+Keep staged and previous content files outside `reference/`. Updates reject stale
+expected content and empty replacements; writes are atomic per file. Only Markdown
+paths inside `reference/` are accepted; traversal and symlinks are rejected. AI
+authors index links through the same commands; there is no Markdown schema or
+semantic parser. CLI deletion and renaming are not provided, protecting historical
+file references. Validation and rebuild never initialize or regenerate Reference;
+existing repositories and Evidence need no migration.
+
+Reference is freely available during Study, Discussion, and Remediation. Independent
+checks announce their policy: recall and understanding default to closed Reference,
+application to open Reference, with explicit task-specific overrides. Mixed checks
+separate their parts. Checkpoints and Evidence record only permission per dimension:
+
+```yaml
+reference:
+  - dimension: recall
+    allowed: false
+  - dimension: application
+    allowed: true
+```
+
+Actual use and file provenance are not tracked; the learner is trusted. Permissions
+provide Assessment context without automatically changing grades. Historical Evidence
+without this optional field has unspecified conditions. Reference editing after
+Remediation still requires later independent verification of the Gap.
+
 ## Tests
 
 ```bash
@@ -130,5 +177,6 @@ See `docs/SPEC.md` for the architecture and product requirements.
 | `study.py` | Study Modes, Resources, and Discussion state |
 | `reevaluation.py` | Assessment chains, Gap reconciliation, and atomic derived state rebuilds |
 | `remediation.py` | Optional teaching checkpoints, completed Gap provenance, skipped mini-lessons, and source validation |
+| `reference.py` | Opaque editable course Markdown, safe file operations, and Reference permission validation |
 
 The `Repository` class composes the responsibility mixins through their inheritance chain. `issues.py` and `yaml_io.py` provide validation messages and safe YAML persistence.

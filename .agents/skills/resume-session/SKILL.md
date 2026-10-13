@@ -30,3 +30,5 @@ python3 scripts/learning.py recover-session <session-id> --minutes <new-budget> 
 ```
 
 Never call ordinary `update-checkpoint` on the stale segment first. Recovery closes that segment at its own `started_at`, opens the new segment, and only then saves the reconstructed checkpoint with the recovery timestamp. A Review due date and Unit mastery remain unchanged until completed Evidence and Assessment exist.
+
+Retain saved `checkpoint.reference[]` permissions alongside independent prompts and partial answers. Do not silently change the policy on resume. When recovering a historical checkpoint without permissions, clarify the announced conditions if known or announce them before the remaining independent part; never infer conditions for historical Evidence or rewrite it. Trust the learner without asking about actual Reference use.

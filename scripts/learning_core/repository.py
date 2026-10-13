@@ -10,11 +10,11 @@ from jsonschema.exceptions import SchemaError
 from jsonschema.validators import validator_for
 
 from .issues import Issue
-from .remediation import RemediationRepositoryMixin
+from .reference import ReferenceRepositoryMixin
 from .yaml_io import YamlFileError, dump_yaml, load_yaml
 
 
-class Repository(RemediationRepositoryMixin):
+class Repository(ReferenceRepositoryMixin):
     DOCUMENTS = {
         "learning": Path("learning.yaml"),
         "context": Path("config/context.yaml"),
@@ -328,6 +328,7 @@ class Repository(RemediationRepositoryMixin):
                 issues.extend(self.validate_frontier(frontier, graph))
 
         issues.extend(self.validate_learning_records())
+        issues.extend(self.validate_reference())
 
         unique: dict[tuple[str, str, str], Issue] = {}
         for issue in issues:

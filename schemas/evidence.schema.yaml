@@ -6,6 +6,8 @@ additionalProperties: false
 required: [format_version, id, unit, session, type, created_at, takeaways, observations]
 properties:
   format_version: {const: 1}
+  reference:
+    $ref: '#/$defs/reference_permissions'
   id:
     type: string
     pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
@@ -141,6 +143,19 @@ allOf:
           properties:
             evidence: false
 $defs:
+  reference_permissions:
+    type: array
+    minItems: 1
+    maxItems: 3
+    uniqueItems: true
+    items:
+      type: object
+      additionalProperties: false
+      required: [dimension, allowed]
+      properties:
+        dimension:
+          enum: [recall, understanding, application]
+        allowed: {type: boolean}
   external_resource:
     type: object
     additionalProperties: false

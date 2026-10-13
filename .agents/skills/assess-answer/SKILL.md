@@ -7,6 +7,8 @@ description: Interpret one immutable initial, Practice, or Review Evidence event
 
 Read `schemas/assessment.schema.yaml`, the referenced Evidence, its initialized Unit, the relevant verification goal, and `map/graph.yaml`. Base the Assessment only on demonstrated answers, not on the user's confidence or claimed completion.
 
+Read optional `Evidence.reference[]` as the announced permission per dimension. Closed-reference recall failure may suggest retrieval weakness; application failure with Reference allowed may suggest an application or understanding problem, but actual consultation is unknown. Do not mechanically change grades because Reference was allowed, infer actual use, or treat its contents or edits as demonstrated mastery. Historical Evidence without metadata has unspecified conditions. Trust learner compliance without a separate violation workflow.
+
 Assign each dimension one fixed value:
 
 - `failed`: no usable demonstration or a fundamental misconception;

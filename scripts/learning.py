@@ -37,7 +37,7 @@ def parser() -> argparse.ArgumentParser:
     validate.add_argument(
         "target",
         nargs="?",
-        choices=("repository", "learning", "context", "graph", "frontier", "settings", "unit", "session", "evidence", "assessment", "progress", "gap", "interest", "resource", "remediation"),
+        choices=("repository", "learning", "context", "graph", "frontier", "settings", "unit", "session", "evidence", "assessment", "progress", "gap", "interest", "resource", "remediation", "reference"),
         default="repository",
     )
     validate.add_argument("identifier", nargs="?", help="id required for entity-specific validation targets")
@@ -103,6 +103,16 @@ def parser() -> argparse.ArgumentParser:
         help="validate and persist an immutable generated Markdown Resource",
     )
     create_resource.add_argument("input", type=Path, help="Markdown document with YAML frontmatter")
+    subcommands.add_parser("ensure-reference", help="lazily create the Reference directory and index")
+    subcommands.add_parser("list-reference", help="list Reference Markdown files")
+    read_reference = subcommands.add_parser("read-reference", help="read a Reference Markdown file")
+    read_reference.add_argument("path", nargs="?", default="reference/index.md")
+    for command in ("create-reference", "update-reference"):
+        write_reference = subcommands.add_parser(command, help="atomically write opaque Reference Markdown")
+        write_reference.add_argument("path", help="destination path inside reference/")
+        write_reference.add_argument("input", type=Path, help="staged Markdown document")
+        if command == "update-reference":
+            write_reference.add_argument("--expected", type=Path, required=True, help="file containing the previously read content")
     create_assessment = subcommands.add_parser("create-assessment", help="validate and append an Assessment")
     create_assessment.add_argument("input", type=Path, help="YAML document to create")
     reevaluate_assessment = subcommands.add_parser(
@@ -280,6 +290,30 @@ def main(argv: list[str] | None = None) -> int:
             path, outcome = repository.create_generated_resource(content)
             print(dump_yaml({outcome: str(path.relative_to(repository.root))}), end="")
             return 0
+        if args.command == "ensure-reference":
+            path = repository.ensure_reference()
+            print(dump_yaml({"index": str(path.relative_to(repository.root))}), end="")
+            return 0
+        if args.command == "list-reference":
+            print(dump_yaml({"files": repository.list_reference_files()}), end="")
+            return 0
+        if args.command == "read-reference":
+            print(repository.read_reference(args.path), end="")
+            return 0
+        if args.command in {"create-reference", "update-reference"}:
+            try:
+                content = args.input.read_text(encoding="utf-8")
+                expected = args.expected.read_text(encoding="utf-8") if args.command == "update-reference" else None
+            except (OSError, UnicodeError) as exc:
+                raise ValueError(f"cannot read staged Reference content: {exc}") from exc
+            if args.command == "create-reference":
+                path = repository.create_reference(args.path, content)
+                outcome = "created"
+            else:
+                path = repository.update_reference(args.path, content, expected)
+                outcome = "updated"
+            print(dump_yaml({outcome: str(path.relative_to(repository.root))}), end="")
+            return 0
         if args.command == "create-assessment":
             path = repository.create_assessment(load_yaml(args.input))
             print(dump_yaml({"created": str(path.relative_to(repository.root))}), end="")
@@ -400,6 +434,10 @@ def main(argv: list[str] | None = None) -> int:
             if not args.identifier:
                 raise ValueError("Remediation validation requires an id")
             issues = repository.validate_remediation(args.identifier)
+        elif args.target == "reference":
+            if args.identifier:
+                raise ValueError("Reference validation does not accept an identifier")
+            issues = repository.validate_reference()
         elif args.target == "settings":
             if args.identifier:
                 raise ValueError("Settings validation does not accept an identifier")
