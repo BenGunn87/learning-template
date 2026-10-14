@@ -1,0 +1,33 @@
+format_version: 1
+id: 2026-10-14-001-review-001-assessment-001
+evidence: 2026-10-14-001-review-001
+type: review
+created_at: '2026-10-14T11:31:00+05:00'
+result:
+  recall: good
+  understanding: good
+  application: good
+evaluated:
+  recall:
+    nodes:
+    - data-modeling
+  understanding:
+    nodes:
+    - sql-and-nosql
+  application:
+    nodes:
+    - data-modeling
+    - transactions
+    - sql-and-nosql
+gaps:
+- Условие UPDATE для перехвата истёкшей брони (статус/срок истечения в WHERE) не сформулировано
+  даже после уточнения; инвариант удерживается только проверкой order_id при подтверждении
+  оплаты.
+- Допустимое отставание карты зала не выражено числом или границей.
+summary: Инвариант и вывод требований к согласованности из критичности устаревших
+  данных объяснены точно, с примерами и read-your-writes. Граница атомарности документа
+  как условие выбора документной модели понятна. В сценарии билетов сущности, инвариант,
+  уникальность event_id+seat_id, ослабленная согласованность карты зала и защита оплаты
+  через проверку order_id выбраны верно; конкурентный перехват брони описан неполно
+  — уверенное good без перехода в easy.
+review_outcome: good

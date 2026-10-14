@@ -3,7 +3,7 @@ id: gap-leader-follower-replication-application-001
 created_at: '2026-10-08T11:26:00+05:00'
 node: leader-follower-replication
 dimension: application
-status: detected
+status: confirmed
 scope: local
 routing_impact: important
 signals:
@@ -12,8 +12,34 @@ signals:
   result: hard
   observed_nodes:
   - leader-follower-replication
+- evidence: 2026-10-14-001-practice-001
+  assessment: 2026-10-14-001-practice-001-assessment-001
+  result: hard
+  observed_nodes:
+  - leader-follower-replication
 history:
 - status: detected
   at: '2026-10-08T11:26:00+05:00'
   evidence: 2026-10-08-001-review-001
+- status: confirmed
+  at: '2026-10-14T12:59:00+05:00'
+  evidence: 2026-10-14-001-practice-001
 resolved_at: null
+remediations:
+- misconceptions_addressed: []
+  guided_exercise: false
+  resource: null
+  id: remediation-2026-10-14-001-replication-log-failover
+  gap: gap-leader-follower-replication-application-001
+  source_evidence: 2026-10-14-001-practice-001
+  source_assessment: 2026-10-14-001-practice-001-assessment-001
+  level: 2
+  focus: 'Журнал репликации как единая упорядоченная последовательность: followers
+    хранят префиксы, выбор нового leader по наибольшей позиции журнала, кворум 1 из
+    2 и кто решает (консенсус/координатор), почему ожидание всех followers ломает
+    доступность записи.
+
+    '
+  session: 2026-10-14-001
+  unit: replicate-data-across-nodes
+  completed_at: '2026-10-14T13:18:35+05:00'

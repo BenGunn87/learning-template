@@ -1,0 +1,45 @@
+format_version: 1
+id: 2026-10-14-001
+started_at: '2026-10-14T11:13:06+05:00'
+time_budget_minutes: 30
+status: completed
+plan:
+  unit: model-data-and-access-patterns
+  actions:
+  - type: review
+    unit: model-data-and-access-patterns
+  - type: practice
+    unit: replicate-data-across-nodes
+actual:
+  unit: model-data-and-access-patterns
+  actions:
+  - type: review
+    unit: model-data-and-access-patterns
+    status: completed
+  - type: practice
+    unit: replicate-data-across-nodes
+    status: completed
+segments:
+- started_at: '2026-10-14T11:13:06+05:00'
+  ended_at: '2026-10-14T13:18:43+05:00'
+  budget_minutes: 30
+  end_reason: completed
+checkpoint:
+  unit: replicate-data-across-nodes
+  action: practice
+  stage: assessment
+  completed_steps:
+    evidence_created: true
+    assessment_created: true
+  reference:
+  - dimension: application
+    allowed: true
+    used: false
+  updated_at: '2026-10-14T13:18:43+05:00'
+evidence:
+- 2026-10-14-001-review-001
+- 2026-10-14-001-practice-001
+completed_at: '2026-10-14T13:18:43+05:00'
+remediations:
+- gap: gap-leader-follower-replication-application-001
+  remediation: remediation-2026-10-14-001-replication-log-failover

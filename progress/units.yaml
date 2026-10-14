@@ -73,29 +73,29 @@ frame-a-system-design-problem:
     repetitions: 2
 model-data-and-access-patterns:
   status: verified
-  attempts: 4
+  attempts: 5
   mastery:
     recall: good
     understanding: good
     application: good
-  latest_evidence: 2026-10-01-001-review-001
-  latest_assessment: 2026-10-01-001-review-001-assessment-001
-  last_attempt: '2026-10-02T10:00:00+05:00'
+  latest_evidence: 2026-10-14-001-review-001
+  latest_assessment: 2026-10-14-001-review-001-assessment-001
+  last_attempt: '2026-10-14T11:30:00+05:00'
   review:
-    last: '2026-10-02'
-    due: '2026-10-08'
-    interval_days: 6
-    repetitions: 1
+    last: '2026-10-14'
+    due: '2026-10-26'
+    interval_days: 12
+    repetitions: 2
 replicate-data-across-nodes:
   status: practice
-  attempts: 2
+  attempts: 3
   mastery:
     recall: good
     understanding: good
     application: hard
-  latest_evidence: 2026-10-08-001-review-001
-  latest_assessment: 2026-10-08-001-review-001-assessment-001
-  last_attempt: '2026-10-08T11:25:00+05:00'
+  latest_evidence: 2026-10-14-001-practice-001
+  latest_assessment: 2026-10-14-001-practice-001-assessment-001
+  last_attempt: '2026-10-14T12:58:00+05:00'
   review:
     last: '2026-10-08'
     due: '2026-10-19'
