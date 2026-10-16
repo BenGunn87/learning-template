@@ -106,8 +106,6 @@ units:
   - type: primary-route
   - type: context
   - type: diagnostic
-  - type: gap
-    gap: gap-leader-follower-replication-application-001
 - id: choose-consistency-under-failures
   title: Choose consistency under failures
   nodes:

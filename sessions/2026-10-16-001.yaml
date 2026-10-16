@@ -1,0 +1,49 @@
+format_version: 1
+id: 2026-10-16-001
+started_at: '2026-10-16T10:24:47+05:00'
+time_budget_minutes: 30
+status: completed
+plan:
+  unit: decompose-a-backend-system
+  actions:
+  - type: review
+    unit: decompose-a-backend-system
+  - type: practice
+    unit: replicate-data-across-nodes
+actual:
+  unit: decompose-a-backend-system
+  actions:
+  - type: review
+    unit: decompose-a-backend-system
+    status: completed
+  - type: practice
+    unit: replicate-data-across-nodes
+    status: completed
+segments:
+- started_at: '2026-10-16T10:24:47+05:00'
+  ended_at: '2026-10-16T11:09:00+05:00'
+  budget_minutes: 30
+  end_reason: completed
+checkpoint:
+  updated_at: '2026-10-16T11:09:00+05:00'
+  unit: replicate-data-across-nodes
+  action: practice
+  stage: assessed
+  completed_steps:
+    prompt_chosen: true
+    answer_received: true
+  reference:
+  - dimension: application
+    allowed: true
+  note: 'Practice application. Продажа билетов на концерты: leader L и F1 в DC-1 (разные
+    стойки), F2 в DC-2 (2 мс), F3 в DC-3 (40 мс). Требования: проданное и подтверждённое
+    место не теряется при отказе любого одного ДЦ; приём продаж продолжается при отказе
+    любого одного ДЦ; p99 записи < 30 мс. 1) Чьих подтверждений ждёт leader и почему
+    (подходит ли F1)? 2) DC-1 упал целиком; позиции журнала F2=1050, F3=1047; кого
+    делать leader, что с F3, кто решает. 3) Маршрут чтений: «мои билеты» сразу после
+    оплаты; схема свободных мест в зале. 4) DC-1 вернулся, у старого L журнал до 1052
+    (1051–1052 клиентам не подтверждены) — что с ним и этими записями.'
+evidence:
+- 2026-10-16-001-review-001
+- 2026-10-16-001-practice-001
+completed_at: '2026-10-16T11:09:00+05:00'

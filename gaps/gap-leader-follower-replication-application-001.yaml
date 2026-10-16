@@ -3,7 +3,7 @@ id: gap-leader-follower-replication-application-001
 created_at: '2026-10-08T11:26:00+05:00'
 node: leader-follower-replication
 dimension: application
-status: confirmed
+status: resolved
 scope: local
 routing_impact: important
 signals:
@@ -24,7 +24,10 @@ history:
 - status: confirmed
   at: '2026-10-14T12:59:00+05:00'
   evidence: 2026-10-14-001-practice-001
-resolved_at: null
+- status: resolved
+  at: '2026-10-16T11:07:00+05:00'
+  evidence: 2026-10-16-001-practice-001
+resolved_at: '2026-10-16T11:07:00+05:00'
 remediations:
 - misconceptions_addressed: []
   guided_exercise: false
