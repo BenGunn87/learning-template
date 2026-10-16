@@ -1,0 +1,20 @@
+format_version: 1
+goal:
+  why: professional-growth
+  outcome: Explore a synthetic Knowledge Map.
+experience:
+  level: beginner
+depth: working
+constraints:
+  default_session_minutes: 25
+preferences:
+  languages:
+  - en
+  resources:
+  - documentation
+diagnostic:
+  status: completed
+  completed_at: '2026-10-01'
+  areas:
+  - area: Data Systems
+    level: unknown

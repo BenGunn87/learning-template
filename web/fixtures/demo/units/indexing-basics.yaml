@@ -1,0 +1,23 @@
+format_version: 1
+id: indexing-basics
+title: Indexing Basics
+nodes:
+- indexing
+- btree
+goal: Объяснить стоимость чтения и записи при использовании B-tree индекса.
+estimated_minutes: 20
+concepts:
+- Indexing Basics
+study_focus:
+- Механизм и ограничения.
+- Применение к конкретному сценарию.
+practice:
+  type: scenario
+  goal: Объяснить стоимость чтения и записи при использовании B-tree индекса.
+verification:
+  recall:
+    enabled: true
+  understanding:
+    enabled: true
+  application:
+    enabled: true

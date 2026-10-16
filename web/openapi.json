@@ -1,0 +1,681 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Learning Knowledge Map",
+    "description": "Local read-only repository viewer. Every request rereads files; no Progress or Frontier rebuilds.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/map": {
+      "get": {
+        "summary": "Knowledge Map",
+        "description": "Read the graph; an uninitialized repository returns empty lists.",
+        "operationId": "knowledge_map_api_map_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Graph cannot be read or validated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/nodes/{node_id}": {
+      "get": {
+        "summary": "Node Details",
+        "description": "Read direct relationships only, without descendant aggregation.",
+        "operationId": "node_details_api_nodes__node_id__get",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Node Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Graph cannot be read or validated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown repository ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/units/{unit_id}": {
+      "get": {
+        "summary": "Unit Details",
+        "description": "Read initialized or planned Unit; missing Progress stays null.",
+        "operationId": "unit_details_api_units__unit_id__get",
+        "parameters": [
+          {
+            "name": "unit_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Unit Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Graph cannot be read or validated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown repository ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Edge": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "part-of",
+              "prerequisite",
+              "related"
+            ],
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "type"
+        ],
+        "title": "Edge"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse"
+      },
+      "Gap": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "node": {
+            "type": "string",
+            "title": "Node"
+          },
+          "dimension": {
+            "type": "string",
+            "enum": [
+              "recall",
+              "understanding",
+              "application"
+            ],
+            "title": "Dimension"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "detected",
+              "confirmed"
+            ],
+            "title": "Status"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "routing_impact": {
+            "type": "string",
+            "title": "Routing Impact"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "node",
+          "dimension",
+          "status",
+          "scope",
+          "routing_impact"
+        ],
+        "title": "Gap"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "MapResponse": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "repository",
+              "demo"
+            ],
+            "title": "Mode"
+          },
+          "repository_state": {
+            "type": "string",
+            "enum": [
+              "uninitialized",
+              "partial",
+              "initialized"
+            ],
+            "title": "Repository State"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/Node"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/Edge"
+            },
+            "type": "array",
+            "title": "Edges"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode",
+          "repository_state",
+          "nodes",
+          "edges"
+        ],
+        "title": "MapResponse"
+      },
+      "Mastery": {
+        "properties": {
+          "recall": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "failed",
+                  "hard",
+                  "good",
+                  "easy"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recall"
+          },
+          "understanding": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "failed",
+                  "hard",
+                  "good",
+                  "easy"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Understanding"
+          },
+          "application": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "failed",
+                  "hard",
+                  "good",
+                  "easy"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application"
+          }
+        },
+        "type": "object",
+        "title": "Mastery"
+      },
+      "Node": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "area",
+              "topic",
+              "concept"
+            ],
+            "title": "Type"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "deprecated"
+            ],
+            "title": "Status",
+            "default": "active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "type"
+        ],
+        "title": "Node"
+      },
+      "NodeResponse": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "repository",
+              "demo"
+            ],
+            "title": "Mode"
+          },
+          "repository_state": {
+            "type": "string",
+            "enum": [
+              "uninitialized",
+              "partial",
+              "initialized"
+            ],
+            "title": "Repository State"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "node": {
+            "$ref": "#/components/schemas/Node"
+          },
+          "parents": {
+            "items": {
+              "$ref": "#/components/schemas/Node"
+            },
+            "type": "array",
+            "title": "Parents"
+          },
+          "children": {
+            "items": {
+              "$ref": "#/components/schemas/Node"
+            },
+            "type": "array",
+            "title": "Children"
+          },
+          "related_nodes": {
+            "items": {
+              "$ref": "#/components/schemas/Node"
+            },
+            "type": "array",
+            "title": "Related Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/Edge"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "units": {
+            "items": {
+              "$ref": "#/components/schemas/Unit"
+            },
+            "type": "array",
+            "title": "Units"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/Gap"
+            },
+            "type": "array",
+            "title": "Gaps"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode",
+          "repository_state",
+          "node",
+          "parents",
+          "children",
+          "related_nodes",
+          "edges",
+          "units",
+          "gaps"
+        ],
+        "title": "NodeResponse"
+      },
+      "Progress": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "learning",
+              "practice",
+              "verified"
+            ],
+            "title": "Status"
+          },
+          "mastery": {
+            "$ref": "#/components/schemas/Mastery"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "Progress"
+      },
+      "Unit": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "goal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Goal"
+          },
+          "nodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "initialized",
+              "planned"
+            ],
+            "title": "Kind"
+          },
+          "in_frontier": {
+            "type": "boolean",
+            "title": "In Frontier"
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Progress"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "nodes",
+          "kind",
+          "in_frontier"
+        ],
+        "title": "Unit"
+      },
+      "UnitResponse": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "repository",
+              "demo"
+            ],
+            "title": "Mode"
+          },
+          "repository_state": {
+            "type": "string",
+            "enum": [
+              "uninitialized",
+              "partial",
+              "initialized"
+            ],
+            "title": "Repository State"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/Unit"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/Node"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/Gap"
+            },
+            "type": "array",
+            "title": "Gaps"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode",
+          "repository_state",
+          "unit",
+          "nodes",
+          "gaps"
+        ],
+        "title": "UnitResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

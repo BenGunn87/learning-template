@@ -1,0 +1,22 @@
+format_version: 1
+id: cache-basics
+title: Caching Basics
+nodes:
+- caching
+goal: Выбрать срок жизни и политику обновления кеша.
+estimated_minutes: 20
+concepts:
+- Caching Basics
+study_focus:
+- Механизм и ограничения.
+- Применение к конкретному сценарию.
+practice:
+  type: scenario
+  goal: Выбрать срок жизни и политику обновления кеша.
+verification:
+  recall:
+    enabled: true
+  understanding:
+    enabled: true
+  application:
+    enabled: true

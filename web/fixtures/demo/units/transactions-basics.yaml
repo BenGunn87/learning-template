@@ -1,0 +1,22 @@
+format_version: 1
+id: transactions-basics
+title: Transaction Boundaries
+nodes:
+- transactions
+goal: Определить границы атомарной операции.
+estimated_minutes: 20
+concepts:
+- Transaction Boundaries
+study_focus:
+- Механизм и ограничения.
+- Применение к конкретному сценарию.
+practice:
+  type: scenario
+  goal: Определить границы атомарной операции.
+verification:
+  recall:
+    enabled: true
+  understanding:
+    enabled: true
+  application:
+    enabled: true

@@ -1,0 +1,22 @@
+format_version: 1
+id: btree-cost
+title: Estimate B-tree Cost
+nodes:
+- btree
+goal: Сравнить индексное чтение с полным сканированием. Unit ещё без Progress.
+estimated_minutes: 20
+concepts:
+- Estimate B-tree Cost
+study_focus:
+- Механизм и ограничения.
+- Применение к конкретному сценарию.
+practice:
+  type: scenario
+  goal: Сравнить индексное чтение с полным сканированием. Unit ещё без Progress.
+verification:
+  recall:
+    enabled: true
+  understanding:
+    enabled: true
+  application:
+    enabled: true

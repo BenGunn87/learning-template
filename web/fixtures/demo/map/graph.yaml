@@ -1,0 +1,106 @@
+format_version: 1
+nodes:
+- id: data-systems
+  title: Data Systems
+  type: area
+  summary: Хранение, обработка и согласованность данных.
+- id: indexing
+  title: Indexing
+  type: topic
+  summary: Как индексы ускоряют чтение и влияют на запись.
+- id: transactions
+  title: Transactions
+  type: topic
+  summary: Границы атомарности и изоляция конкурентных операций.
+- id: query-planning
+  title: Query Planning
+  type: topic
+  summary: Выбор способа выполнения запроса.
+- id: btree
+  title: B-tree
+  type: concept
+  summary: 'Один Graph Node с двумя родителями: Indexing и Query Planning.'
+- id: isolation
+  title: Isolation Levels
+  type: concept
+  summary: Какие эффекты конкурентного выполнения разрешены.
+- id: caching
+  title: Caching
+  type: topic
+  summary: Сохранённый Progress verified на связанной Unit.
+- id: latency
+  title: Latency
+  type: concept
+- id: loop-a
+  title: Hierarchy Loop A
+  type: topic
+  summary: Цикл, достижимый из обычного корня.
+- id: loop-b
+  title: Hierarchy Loop B
+  type: concept
+  summary: Раскрытие возвращает ссылку на уже встреченный узел.
+- id: cycle-a
+  title: Rootless Cycle A
+  type: topic
+  summary: Компонента без корня показывается отдельно.
+- id: cycle-b
+  title: Rootless Cycle B
+  type: concept
+  summary: Часть циклической компоненты без корня.
+- id: cycle-c
+  title: Rootless Cycle C
+  type: concept
+  summary: Замыкает цикл без корня.
+- id: cycle-leaf
+  title: Cycle Leaf
+  type: concept
+  summary: Потомок циклической компоненты тоже доступен.
+edges:
+- from: indexing
+  to: data-systems
+  type: part-of
+- from: transactions
+  to: data-systems
+  type: part-of
+- from: query-planning
+  to: data-systems
+  type: part-of
+- from: caching
+  to: data-systems
+  type: part-of
+- from: btree
+  to: indexing
+  type: part-of
+- from: btree
+  to: query-planning
+  type: part-of
+- from: isolation
+  to: transactions
+  type: part-of
+- from: loop-a
+  to: indexing
+  type: part-of
+- from: loop-b
+  to: loop-a
+  type: part-of
+- from: loop-a
+  to: loop-b
+  type: part-of
+- from: cycle-a
+  to: cycle-b
+  type: part-of
+- from: cycle-b
+  to: cycle-c
+  type: part-of
+- from: cycle-c
+  to: cycle-a
+  type: part-of
+- from: cycle-leaf
+  to: cycle-b
+  type: part-of
+- from: btree
+  to: isolation
+  type: prerequisite
+- from: indexing
+  to: query-planning
+  type: related

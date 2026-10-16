@@ -1,0 +1,53 @@
+format_version: 1
+id: 2026-10-04-001
+started_at: '2026-10-04T10:00:00+05:00'
+time_budget_minutes: 25
+status: completed
+plan:
+  unit: cache-basics
+  actions:
+  - type: study
+    unit: cache-basics
+actual:
+  unit: cache-basics
+  actions:
+  - type: study
+    unit: cache-basics
+    status: completed
+segments:
+- started_at: '2026-10-04T10:00:00+05:00'
+  ended_at: '2026-10-04T10:25:00+05:00'
+  budget_minutes: 25
+  end_reason: completed
+checkpoint:
+  unit: cache-basics
+  action: study
+  stage: takeaways
+  completed_steps:
+    mode_selected: true
+    resources_prepared: true
+    study_focus_shown: true
+    study_completed: true
+    recall_completed: true
+    practice_completed: true
+  study_mode: external
+  resources:
+  - title: Synthetic demo notes
+    url: https://example.com/demo
+    type: external
+    format: article
+    language: en
+    status: completed
+  updated_at: '2026-10-04T10:25:00+05:00'
+evidence:
+- 2026-10-04-001-initial
+completed_at: '2026-10-04T10:25:00+05:00'
+study:
+  mode: external
+  resources:
+  - title: Synthetic demo notes
+    url: https://example.com/demo
+    type: external
+    format: article
+    language: en
+    status: completed

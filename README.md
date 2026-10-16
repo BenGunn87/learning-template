@@ -17,6 +17,42 @@ python3 -m venv .venv
 
 When using the virtual environment, either activate it or replace `python3` in the commands below with `.venv/bin/python`.
 
+## Local Knowledge Map
+
+The optional read-only Web UI uses FastAPI, React, and React Flow. Install its
+dependencies once (Node.js 22.12+ required; creates `.venv` if needed):
+
+```bash
+make web-install
+```
+
+Then start from the repository root with one command:
+
+```bash
+make web
+```
+
+Open <http://127.0.0.1:8000>. The viewer reads this checkout, never modifies
+learning data, and rereads files on every API request. Refresh the browser to
+see file changes. An uninitialized repository shows an empty-state message.
+
+To explore the separate synthetic fixture, stop the server and run:
+
+```bash
+make web-demo
+```
+
+Demo mode reads only `web/fixtures/demo/` and is visibly marked **DEMO**.
+There is no automatic demo fallback or repository/branch selector. Node and
+Unit links can be bookmarked and opened directly.
+
+Both launch commands build the frontend before starting the backend. Use
+`make web PORT=8001` to change the backend port; `make help` lists all commands.
+
+See [web/README.md](web/README.md) for architecture, frontend development,
+the changed-file guide, and manual verification scenarios. The local API
+contract is in [web/API.md](web/API.md), with generated OpenAPI at `/openapi.json`.
+
 ## Initialize a topic
 
 Open the repository in Codex or Claude Code and say, for example:

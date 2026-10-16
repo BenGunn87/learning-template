@@ -1,0 +1,70 @@
+format_version: 1
+focus:
+  primary: data-systems
+  secondary: []
+units:
+- id: indexing-basics
+  title: Indexing Basics
+  nodes:
+  - indexing
+  - btree
+  goal: Демонстрационная запланированная Unit.
+  estimated_minutes: 20
+  priority: medium
+  routing_reasons:
+  - type: primary-route
+- id: transaction-isolation
+  title: Choose an Isolation Level
+  nodes:
+  - transactions
+  - isolation
+  goal: Демонстрационная запланированная Unit.
+  estimated_minutes: 20
+  priority: medium
+  routing_reasons:
+  - type: primary-route
+- id: query-plan
+  title: Read a Query Plan
+  nodes:
+  - query-planning
+  goal: Демонстрационная запланированная Unit.
+  estimated_minutes: 20
+  priority: medium
+  routing_reasons:
+  - type: primary-route
+- id: cache-policy
+  title: Choose a Cache Policy
+  nodes:
+  - caching
+  goal: Демонстрационная запланированная Unit.
+  estimated_minutes: 20
+  priority: medium
+  routing_reasons:
+  - type: primary-route
+- id: cycle-navigation
+  title: Explore a Rootless Component
+  nodes:
+  - cycle-a
+  goal: Демонстрационная запланированная Unit.
+  estimated_minutes: 20
+  priority: medium
+  routing_reasons:
+  - type: primary-route
+- id: transactions-basics
+  title: Transaction Boundaries
+  nodes:
+  - transactions
+  goal: Демонстрационная запланированная Unit.
+  estimated_minutes: 20
+  priority: medium
+  routing_reasons:
+  - type: primary-route
+- id: cache-basics
+  title: Caching Basics
+  nodes:
+  - caching
+  goal: Демонстрационная запланированная Unit.
+  estimated_minutes: 20
+  priority: medium
+  routing_reasons:
+  - type: primary-route
