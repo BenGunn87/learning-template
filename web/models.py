@@ -1,5 +1,6 @@
 """Read-only API contract; FastAPI generates /openapi.json from these models."""
 
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -25,9 +26,22 @@ class Mastery(BaseModel):
     application: Literal["failed", "hard", "good", "easy"] | None = None
 
 
+class Review(BaseModel):
+    last: date | None = None
+    due: date | None = None
+    interval_days: int | None = None
+    repetitions: int | None = None
+
+
 class Progress(BaseModel):
     status: Literal["learning", "practice", "verified"]
     mastery: Mastery = Field(default_factory=Mastery)
+    attempts: int | None = None
+    last_attempt: datetime | None = None
+    review: Review | None = None
+    review_overdue_days: int | None = Field(
+        default=None, description="Days since Review became due, from the engine's due-review list; null when not due"
+    )
 
 
 class Gap(BaseModel):

@@ -47,7 +47,7 @@ To start the backend directly without rebuilding, use `.venv/bin/python -m web`
 | --- | --- |
 | `__main__.py`, `__init__.py`, `requirements.txt` | Python entry point and optional dependencies |
 | `app.py` | Three GET API routes, no-store headers, built SPA and direct-link hosting |
-| `data.py` | One new Snapshot per request using Repository graph/state, read_progress, list_gaps and existing YAML readers; no writes or derived-state rebuilds |
+| `data.py` | One new Snapshot per request using Repository graph/state, read_progress, get_due_reviews, list_gaps and existing YAML readers; no writes or derived-state rebuilds |
 | `models.py`, `API.md`, `openapi.json`, `export_openapi.py` | Typed response contract and documented semantics; OpenAPI exported from FastAPI with `python -m web.export_openapi` and served at `/openapi.json` |
 | `src/main.jsx` | Map, search, Node inspector, Unit page, loading/error/empty states |
 | `src/hierarchy.js` | Display occurrences, source-component detection, cycle markers, expand/collapse, search paths and layout; no learning logic |
@@ -78,16 +78,19 @@ No automated tests are required to run the viewer. Use these browser scenarios:
 
 1. Start ordinary mode in this uninitialized template. Confirm the initialization
    message and absence of DEMO or substituted fixture data.
-2. Start `--demo`. Expand Data Systems → Indexing and Query Planning. B-tree
+2. Start `--demo`. With three or fewer roots they open expanded; with more,
+   the map starts collapsed. Expand Data Systems → Indexing and Query Planning. B-tree
    appears under both. Both copies open `/nodes/btree` and the same details.
 3. Confirm Latency is a root despite being a Concept, and has an explicit missing
    description message. Rootless Cycle A has a separate entry point. Expand its
    branch and the Hierarchy Loop under Indexing until a cycle link appears;
    it must not expand indefinitely. Cycle Leaf remains reachable.
-4. Search for `B-tree`, `Cycle Leaf`, and `Isolation`. Selecting a result expands
-   ancestors and centers the map. Search is case insensitive. A nonsense query
+4. Search for `B-tree`, `Cycle Leaf`, and `Isolation`; IDs and summaries match too.
+   Selecting a result expands ancestors and centers the map. Search is case
+   insensitive; Escape or × clears it. Clicking a visible Node pans without
+   changing the zoom. A nonsense query
    shows no matches. Directly open and refresh `/nodes/isolation`, then use Back.
-5. Show B-tree and Isolation, then enable `prerequisite`; enable `related` with
+5. Show B-tree and Isolation, then enable «Предпосылки» (`prerequisite`); enable «Связанные» (`related`) with
    Indexing and Query Planning visible. Check edge labels and arrows. No false
    links to collapsed ancestors should appear.
 6. Select Data Systems: no Units or active Gaps are inherited from descendants.
@@ -95,8 +98,9 @@ No automated tests are required to run the viewer. Use these browser scenarios:
    as also in Frontier. Its Progress is `practice`; its application Gap is active.
 7. Open `/units/indexing-basics`, `/units/transactions-basics`, and
    `/units/cache-basics`: inspect `practice`, `learning`, and `verified` with their
-   stored dimension results. Open `/units/btree-cost`: no Progress. Open
-   `/units/transaction-isolation`: Planned, no Progress, linked Nodes and direct
+   stored dimension results, attempts and last attempt; `cache-basics` shows its
+   Review date marked overdue. Open `/units/btree-cost`: no Progress. Open
+   `/units/transaction-isolation`: planned, no Progress, linked Nodes and direct
    active Gaps. Follow Node links back to the map.
 8. Open an unknown Node/Unit ID: an error with a route back to the map. Narrow the
    browser to phone width: search, controls, Node details and Unit links remain

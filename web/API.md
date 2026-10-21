@@ -28,6 +28,12 @@ warnings. An unreadable or invalid graph returns `503 {"detail": "…"}`.
 Unknown Node/Unit IDs return `404 {"detail": "…"}`. Unsupported write methods
 return `405`. No request rebuilds Progress or Frontier.
 
+`progress` carries the stored `status`, `mastery`, `attempts`, `last_attempt`
+and `review`, plus `review_overdue_days` from the engine's `get_due_reviews`
+(`null` when the Review is not due). The viewer skips the engine's full
+repository validation for this read-only lookup, since it takes tens of seconds
+on real data; unreadable records surface as warnings instead.
+
 Units are deduplicated by ID: initialized records take precedence over
 Frontier records, including their Node associations. A Frontier-only Unit has
 `kind: planned` and `progress: null`, even if an orphaned Progress entry exists.

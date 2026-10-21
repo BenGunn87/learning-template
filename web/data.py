@@ -15,12 +15,31 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEMO_ROOT = PROJECT_ROOT / "web/fixtures/demo"
 
 
+class ViewerRepository(Repository):
+    """Engine access for the viewer.
+
+    Demo fixtures carry no schemas/, so this checkout's schemas are used. Engine
+    read helpers validate the whole repository first, which takes tens of
+    seconds on real data; the viewer reports unreadable records as warnings
+    instead, so only the repository state is required.
+    """
+
+    def path(self, relative: Path | str) -> Path:
+        if Path(relative).parts[:1] == ("schemas",):
+            return PROJECT_ROOT / relative
+        return super().path(relative)
+
+    def _require_initialized_valid(self) -> None:
+        state, issues = self.state()
+        if state != "initialized":
+            raise ValueError(f"learning repository is {state}: " + "; ".join(issue.render() for issue in issues))
+
+
 class Snapshot:
     """One request's data. Instances are never retained between requests."""
 
     def __init__(self, demo: bool):
-        self.repository = Repository(DEMO_ROOT if demo else PROJECT_ROOT)
-        self.validator = Repository(PROJECT_ROOT)
+        self.repository = ViewerRepository(DEMO_ROOT if demo else PROJECT_ROOT)
         self.mode = "demo" if demo else "repository"
         self.state, issues = self.repository.state()
         self.warnings = [issue.render() for issue in issues]
@@ -33,7 +52,7 @@ class Snapshot:
 
         try:
             graph = self.repository.read("graph")
-            graph_issues = self.validator.validate_graph(graph)
+            graph_issues = self.repository.validate_graph(graph)
             if graph_issues:
                 raise ValueError("; ".join(issue.render() for issue in graph_issues))
             self.nodes = {node["id"]: Node.model_validate(node) for node in graph["nodes"]}
@@ -73,6 +92,7 @@ class Snapshot:
             self.warnings.append(f"Progress недоступен: {exc}")
             progress = {}
 
+        overdue = self._overdue_reviews()
         records, issues = self.repository._read_files("units")
         self.warnings.extend(issue.render() for issue in issues)
         seen: set[str] = set()
@@ -86,11 +106,22 @@ class Snapshot:
                 if unit.id in progress:
                     try:
                         unit.progress = Progress.model_validate(progress[unit.id])
+                        unit.progress.review_overdue_days = overdue.get(unit.id)
                     except ValidationError as exc:
                         self.warnings.append(f"Progress {unit.id} пропущен: {exc}")
                 self.units[unit.id] = unit
             except (ValidationError, TypeError, AttributeError) as exc:
                 self.warnings.append(f"Unit {path.name} пропущена: {exc}")
+
+    def _overdue_reviews(self) -> dict[str, int]:
+        # Due Reviews are the engine's decision; the viewer only displays them.
+        if self.state != "initialized":
+            return {}
+        try:
+            return {item["id"]: item["overdue_days"] for item in self.repository.get_due_reviews()}
+        except (YamlFileError, ValueError, TypeError, KeyError) as exc:
+            self.warnings.append(f"Не удалось определить просроченные Review: {exc}")
+            return {}
 
     def _read_gaps(self) -> None:
         # list_gaps owns existing reading/sorting semantics. A malformed optional
@@ -111,7 +142,7 @@ class Snapshot:
 
     def node(self, node_id: str) -> Node:
         if node_id not in self.nodes:
-            raise HTTPException(404, "Node не найден")
+            raise HTTPException(404, "Узел не найден")
         return self.nodes[node_id]
 
     def unit(self, unit_id: str) -> Unit:

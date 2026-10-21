@@ -75,6 +75,7 @@ export function prepareHierarchy(nodes, edges) {
 }
 
 export const occurrenceId = (path) => path.join('/');
+const edgeLabels = { prerequisite: 'предпосылка', related: 'связь' };
 
 export function projectHierarchy(hierarchy, expanded, selectedId, callbacks, extraEdges) {
   const nodes = [];
@@ -113,7 +114,7 @@ export function projectHierarchy(hierarchy, expanded, selectedId, callbacks, ext
         selected: originalId === selectedId,
         data: {
           ...node, originalId, cycle, open, childCount: childIds.length,
-          multipleParents: hierarchy.parents.get(originalId).length > 1,
+          parentCount: hierarchy.parents.get(originalId).length,
           rootless: item.path.length === 1 && root.cyclic,
           onToggle: () => callbacks.onToggle(id),
           onSelect: () => callbacks.onSelect(originalId, cycle ? null : id),
@@ -129,7 +130,8 @@ export function projectHierarchy(hierarchy, expanded, selectedId, callbacks, ext
         style: { stroke: cycle ? '#d18c45' : '#a4b7ad', strokeDasharray: cycle ? '5 5' : undefined },
       });
     }
-    row += 0.6;
+    // Extra space separates expanded trees; collapsed roots stay compact.
+    if (expanded.has(root.id) && hierarchy.children.get(root.id).length) row += 0.6;
   }
 
   // Non-hierarchical edges connect one visible occurrence of each endpoint.
@@ -141,7 +143,7 @@ export function projectHierarchy(hierarchy, expanded, selectedId, callbacks, ext
     if (!source || !target) continue;
     edges.push({
       id: `${edge.type}:${index}`, source, target, type: 'default',
-      label: edge.type, animated: false,
+      label: edgeLabels[edge.type] || edge.type, animated: false,
       markerEnd: edge.type === 'prerequisite' ? { type: 'arrowclosed' } : undefined,
       style: { stroke: edge.type === 'prerequisite' ? '#af7740' : '#7b80a3', strokeDasharray: '5 5' },
       labelStyle: { fontSize: 10, fill: '#5c6470' },
